@@ -1,0 +1,8 @@
+venv
+*.pyc
+staticfiles
+.env
+db.sqlite3
+__pycache__/
+app/
+*.pytest_cache
