@@ -31,7 +31,7 @@ Para rodar esse projeto localmente, siga os passos a seguir:
     ```
 2. Entre no diretório do projeto
     ```
-    $ cd natrave-bot
+    $ cd NaTrave
     ```
 
 3. Copie `.env.sample` como `.env`
