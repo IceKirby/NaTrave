@@ -1,0 +1,17 @@
+# flyctl launch added from .gitignore
+**/venv
+**/*.pyc
+**/staticfiles
+**/.env
+**/db.sqlite3
+**/__pycache__
+**/app
+**/*.pytest_cache
+
+# flyctl launch added from .pytest_cache/.gitignore
+# Created by pytest automatically.
+.pytest_cache/**/*
+
+# flyctl launch added from futebot/.pytest_cache/.gitignore
+# Created by pytest automatically.
+futebot/.pytest_cache/**/*
