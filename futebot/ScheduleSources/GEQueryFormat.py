@@ -1,5 +1,5 @@
-query_format = """{
-  championshipsAgenda(filter: {date: "{{{QueryDate}}}"}) {
+query_format = """query ($params: Date!) {
+  championshipsAgenda(filter: {date: $params}) {
     championship {
       name
       __typename
