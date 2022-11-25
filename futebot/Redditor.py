@@ -18,7 +18,8 @@ reddit = praw.Reddit(
     password=os.environ.get('reddit_password'),
     client_id=os.environ.get('reddit_client_id'),
     client_secret=os.environ.get('reddit_client_secret'),
-    user_agent=os.environ.get('reddit_user_agent')
+    user_agent=os.environ.get('reddit_user_agent'),
+    ratelimit_seconds=300
 )
 cached_threads = {}
 

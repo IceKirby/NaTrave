@@ -92,7 +92,7 @@ Estatísticas
   
 ---  
 
-### Videos  
+### Vídeos  
   
 {Videos}
 
