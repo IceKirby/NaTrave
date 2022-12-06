@@ -375,7 +375,7 @@ class Source365Scores(MatchSource):
         current = MatchPeriod.pre_match
         
         # Checks if match has Extra Time and/or Penalties Shootout
-        has_extra_time = len(list(filter(lambda x: x["Period"] == "4", feed))) > 0
+        has_extra_time = len(list(filter(lambda x: x["Period"] in ["3", "4"], feed))) > 0
         has_penalties = len(list(filter(lambda x: x["Period"] == "5", feed))) > 0
         # Default Periods in a 90 minutes match
         period_order = [MatchPeriod.pre_match, MatchPeriod.first_half, MatchPeriod.interval, MatchPeriod.second_half]
