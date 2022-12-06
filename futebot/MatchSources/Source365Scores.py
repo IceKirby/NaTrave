@@ -267,8 +267,11 @@ class Source365Scores(MatchSource):
     def get_penalties_score(self, game):
         stages = self.get_path_value(game, "stages", [])
         for s in stages:
-            if s["id"] == 11 and "homeCompetitorExtraScore" in s:
-                return int(s["homeCompetitorExtraScore"]), int(s["awayCompetitorExtraScore"])
+            if s["id"] == 11:
+                if "homeCompetitorExtraScore" in s:
+                    return int(s["homeCompetitorExtraScore"]), int(s["awayCompetitorExtraScore"])
+                elif "homeCompetitorScore" in s:
+                    return int(s["homeCompetitorScore"]), int(s["awayCompetitorScore"])
         return None, None
     
     ### #################### ###
