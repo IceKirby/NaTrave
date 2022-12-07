@@ -213,7 +213,7 @@ class Source365Scores(MatchSource):
         elif status == "Prorrogação": # English: "Extra Time"
             if clock_running == False and minutes == 105:
                 return MatchPeriod.preparing_extra_time, "0"
-        elif status == "Fim da Prorrogação":
+        elif status == "Fim da Prorrogação" or status == "Pré penalt.":
             return MatchPeriod.preparing_penalties, "0"
         elif status == "Pênaltis":
             return MatchPeriod.penalties, "0"
@@ -390,9 +390,6 @@ class Source365Scores(MatchSource):
             period_order = period_order + [MatchPeriod.preparing_penalties, MatchPeriod.penalties]
         # Adds Post Match period
         period_order.append(MatchPeriod.post_match)
-        
-        ongoing_periods = [MatchPeriod.first_half, MatchPeriod.second_half, MatchPeriod.extra_first_half, MatchPeriod.extra_second_half, MatchPeriod.penalties]
-        interval_periods = [MatchPeriod.pre_match, MatchPeriod.interval, MatchPeriod.preparing_extra_time, MatchPeriod.extra_interval, MatchPeriod.preparing_penalties]
             
         # Checks each feed entry and assign the current MatchPeriod to it
         period_length = len(period_order)
@@ -409,7 +406,7 @@ class Source365Scores(MatchSource):
                 timeline_added = "Timeline" not in previous and "Timeline" in entry
                 timeline_removed = "Timeline" in previous and "Timeline" not in entry
             
-            if type in ["start", "kick off"] or (timeline_added and current in interval_periods):
+            if type in ["start", "kick off"] or (timeline_added and current.is_interval()):
                 # If entry is of a start type, change to the next MatchPeriod before assigning it
                 p_index = period_order.index(current)
                 current = period_order[p_index+1]
@@ -417,11 +414,10 @@ class Source365Scores(MatchSource):
                 entry["Title"] = self.period_desc("Começa ", current)
                 entry["Comment"] = ""
                 entry["TypeName"] = "start"
-            elif "end " in type or type in ["half time", "half_time summary", "full time"] or (timeline_removed and current in ongoing_periods):
-                entry["PeriodType"] = current
-                
+            elif "end " in type or type in ["half time", "half_time summary", "full time"] or (timeline_removed and current.is_running()):
                 # Don't change current period if it's already the interval
                 if type == "half_time summary" and current == MatchPeriod.interval:
+                    entry["PeriodType"] = current
                     continue
                 
                 entry["Title"] = self.period_desc("Termina ", current)
@@ -431,6 +427,7 @@ class Source365Scores(MatchSource):
                 p_index = period_order.index(current) + 1
                 if p_index < period_length:
                     current = period_order[p_index]
+                entry["PeriodType"] = current
             else:
                 entry["PeriodType"] = current
             

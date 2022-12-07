@@ -28,6 +28,9 @@ class MatchPeriod(enum.Enum):
     def is_running(self):
         return self in [MatchPeriod.first_half, MatchPeriod.second_half, MatchPeriod.extra_first_half, MatchPeriod.extra_second_half, MatchPeriod.penalties]
     
+    def is_interval(self):
+        return self in [MatchPeriod.pre_match, MatchPeriod.interval, MatchPeriod.preparing_extra_time, MatchPeriod.extra_interval, MatchPeriod.preparing_penalties]
+    
     def is_finished(self):
         return self == MatchPeriod.post_match or self == MatchPeriod.finished
     

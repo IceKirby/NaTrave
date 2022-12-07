@@ -245,9 +245,6 @@ class MatchSource:
         return video
     
     def add_period_transitions(self):
-        play_periods = [MatchPeriod.first_half, MatchPeriod.second_half, MatchPeriod.extra_first_half, MatchPeriod.extra_second_half, MatchPeriod.penalties]
-        finished_periods = [MatchPeriod.post_match, MatchPeriod.finished]
-        
         count = len(self.feed)
         if count == 0:
             return
@@ -259,12 +256,12 @@ class MatchSource:
             prev = self.feed[index-1]
             
             if play.period != prev.period:
-                if play.period in play_periods:
+                if play.period.is_running():
                     # Add transition saying the period has started
                     title = self.period_desc("Começa ", play.period)
                     entry = InfoFeedPlay(play.period, "0:00", PlayType.period_start, title, "", None)
                     transitions[index] = entry
-                elif prev.period in play_periods:
+                elif prev.period.is_running():
                     # Add transition saying the period has ended
                     title = self.period_desc("Termina ", prev.period)
                     entry = InfoFeedPlay(prev.period, prev.time, PlayType.period_end, title, "", None)
@@ -273,13 +270,13 @@ class MatchSource:
         # Check last feed item manually, since it has no other entry for comparison
         last = self.feed[count-1]
         period = self.state.period
-        if last.period in play_periods and last.period != period:
+        if last.period.is_running() and last.period != period:
             title = self.period_desc("Termina ", last.period)
             entry = InfoFeedPlay(last.period, last.time, PlayType.period_end, title, "", None)
             transitions[count] = entry
         
         # Add End of Match entry if it's already finished
-        if period in finished_periods:
+        if period.is_finished():
             entry = InfoFeedPlay(period, "0:00", PlayType.period_start, "Fim de Jogo!", "", None)
             transitions[count+1] = entry
         
