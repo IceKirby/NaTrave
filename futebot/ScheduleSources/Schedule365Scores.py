@@ -82,9 +82,9 @@ class Schedule365Scores(BaseSchedule):
                 match.away_score = away["score"]
             
             if "penaltyScore" in home:
-                match.home_score = home["penaltyScore"]
+                match.home_penalty = home["penaltyScore"]
             if "penaltyScore" in away:
-                match.away_score = away["penaltyScore"]
+                match.away_penalty = away["penaltyScore"]
             
             match.source = "365Scores"
             id = m["id"]

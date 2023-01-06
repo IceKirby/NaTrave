@@ -422,8 +422,8 @@ def fill_match_links(match, day):
     
     # Looks for match at 365Scores, and assigns its URL if found
     if match.s365_url == None:
-        res = schedule365.find_match(day, match.home_team, match.away_team)
-        # res = schedule365.find_match(day, match.home_team, match.away_team, is_youth_match, is_women_match)
+        # res = schedule365.find_match(day, match.home_team, match.away_team)
+        res = schedule365.find_match(day, match.home_team, match.away_team, is_youth_match, is_women_match)
         if res and res.url:
             match.s365_url = res.url
 

@@ -406,7 +406,7 @@ class Source365Scores(MatchSource):
                 timeline_added = "Timeline" not in previous and "Timeline" in entry
                 timeline_removed = "Timeline" in previous and "Timeline" not in entry
             
-            if type in ["start", "kick off"] or (timeline_added and current.is_interval()):
+            if (type in ["start", "kick off"] and not "delay" in type) or (timeline_added and current.is_interval()):
                 # If entry is of a start type, change to the next MatchPeriod before assigning it
                 p_index = period_order.index(current)
                 current = period_order[p_index+1]
@@ -414,7 +414,7 @@ class Source365Scores(MatchSource):
                 entry["Title"] = self.period_desc("Começa ", current)
                 entry["Comment"] = ""
                 entry["TypeName"] = "start"
-            elif "end " in type or type in ["half time", "half_time summary", "full time"] or (timeline_removed and current.is_running()):
+            elif ("end " in type and not "delay" in type) or type in ["half time", "half_time summary", "full time"] or (timeline_removed and current.is_running()):
                 # Don't change current period if it's already the interval
                 if type == "half_time summary" and current == MatchPeriod.interval:
                     entry["PeriodType"] = current
@@ -430,7 +430,6 @@ class Source365Scores(MatchSource):
                 entry["PeriodType"] = current
             else:
                 entry["PeriodType"] = current
-            
         
         return feed
     

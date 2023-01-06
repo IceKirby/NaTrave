@@ -17,7 +17,7 @@ class BaseSchedule:
     def get_day_schedule(self, day):
         pass
 
-    def find_match(self, day, home_team, away_team, is_youth=False, is_women=False):
+    def find_match(self, day, home_team, away_team, is_youth=None, is_women=None):
         try:
             schedule = self.get_day_schedule(day)
         except Exception as e:
@@ -43,7 +43,7 @@ class BaseSchedule:
         else:
             return normal_match[0] if normal_match[1] > sufix_match[1] else sufix_match[0]
     
-    def find_best_match(self, schedule, home_team, away_team, is_youth=False, is_women=False):
+    def find_best_match(self, schedule, home_team, away_team, is_youth=None, is_women=None):
         # If no exact match, check for a close one
         highest = self.acceptable_fuzz_rate
         match_found = None

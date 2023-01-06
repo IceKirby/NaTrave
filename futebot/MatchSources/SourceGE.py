@@ -364,7 +364,7 @@ class SourceGE(MatchSource):
         return None if value not in type_dict else type_dict[value]
 
     def remove_time_text(self, text):
-        exp = r"A(os)?\s[0-9]+(\smin|\sminutos|\sseg|\ssegundos|\'|\")\sdo\s[0-9]+º\s[Tt]empo\s-\s"
+        exp = r"Ao?s?\s[0-9]+(\smin|\sminutos|\sseg|\ssegundos|\'|\")\sdo\s([0-9]+º|primeiro|segundo)\s[Tt]empo\s(da\sprorrogação\s)?-\s"
         if re.match(exp, text):
             text = re.sub(exp, "", text)
         
