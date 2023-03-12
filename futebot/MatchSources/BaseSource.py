@@ -317,5 +317,8 @@ class MatchSource:
             return str
         symbols = [",",".",":",";","!","?","(",")","[","]", "|"]
         str = re.sub(r' +', " ", str.strip())
-        punctuation = "" if str[-1] in symbols else "."
+        if str and len(str) > 1:
+            punctuation = "" if str[-1] in symbols else "."
+        else:
+            punctuation = ""
         return str[0].upper() + str[1:] + punctuation
