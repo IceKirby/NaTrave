@@ -2,13 +2,13 @@
 no_sub_specified = "Seu comando não foi reconhecido porque você não especificou um subreddit."
 no_such_sub = "Não foi possível processar seu comando porque ele contém um ou mais subreddits inválidos: {Name}"
 mod_only_command = "Não foi possível processar seu comando porque você não é um moderador dos seguintes subreddits: {Name}."
-registered_only_command = "Não foi possível processar seu comando porque os seguintes subreddits não estão registrados com o bot: {Name}"
+registered_only_command = "Não foi possível processar seu comando porque os seguintes subreddits não estão registrados com o bot: {Name}. Para registrar um subreddit, leia as instruções em https://www.reddit.com/r/NaTrave/wiki/registrar"
 
 # [COMMAND] REQUEST MATCH
 request_match_success = "Você requisitou as seguintes partidas:  \n  \n{Matches}"
 request_match_error = "Não foi possível agendar as partidas para {Name}, tente novamente em instantes."
-request_match_no_match = "Não foi possível encontrar as partidas na data requisitada."
-request_match_invalid_format = "Não foi possível agendar partidas para {Name} porque o formato da mensagem não é válido."
+request_match_no_match = "Não foi possível encontrar as partidas na data requisitada. Verifique se você especificou a data e os times corretos e se eles estão na ordem Mandante vs Visitante."
+request_match_invalid_format = "Não foi possível agendar partidas para {Name} porque o formato da mensagem não é válido. Confira o formato correto em https://www.reddit.com/r/NaTrave/wiki/requisitar"
 
 # [COMMAND] ABORT MATCH
 abort_match_success = "Você requisitou o cancelamento das seguintes partidas:  \n  \n{Matches}"
@@ -33,12 +33,12 @@ sub_unregister_error = "Não foi possível desregistrar {Name}, tente novamente 
 
 # [COMMAND] MOD
 mod_accepted = "Convite para moderador de {Name} foi aceito!"
-mod_invite_fail = "Não foi possível aceitar o convite para moderador de r/{Name}. Verifique se o convite foi enviado corretamente e tente novamente."
+mod_invite_fail = "Não foi possível aceitar o convite para moderador de r/{Name}. Verifique se o convite foi enviado corretamente e tente novamente. Leia mais informações em https://www.reddit.com/r/NaTrave/wiki/registrar#wiki_adicionando_o_bot_como_moderador"
 
 # [COMMAND] SUBSCRIBE
 subscribe_success = "Subreddit {Name} está seguindo jogos que atendem aos seguintes critérios:  \n  \n{Follows}"
 subscribe_fail = "Não foi possível seguir os times/torneios requisitados, tente novamente mais tarde."
-subscribe_invalid_format = "Não foi possível seguir times/torneios para {Name} porque o formato da mensagem não é válido."
+subscribe_invalid_format = "Não foi possível seguir times/torneios para {Name} porque o formato da mensagem não é válido. Verifique o formato correto em https://www.reddit.com/r/NaTrave/wiki/seguir"
 
 subscribe_team_tour = "- **Partidas dos times:** {Teams}  \n- **Nas seguintes competições:** {Tours}"
 subscribe_team_only = "- **Partidas dos times:** {Teams}"

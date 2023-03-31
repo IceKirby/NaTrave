@@ -171,7 +171,7 @@ class SourceGE(MatchSource):
         if play["momento"] == "":
             minutes_mod, seconds_mod = "00", "00"
         else:
-            minutes_mod, seconds_mod, *rest = play["momento"].split(":")
+            minutes_mod, seconds_mod, *rest = list(map(lambda x: x.replace(r"[^0-9]", ""), play["momento"].split(":")))
 
         time = datetime.strptime(play["created"], "%Y-%m-%dT%H:%M:%S.%fZ")
         time_minutes_mod = zero_pad(str(time.hour * 60 + time.minute), 4)

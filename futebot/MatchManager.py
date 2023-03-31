@@ -36,13 +36,18 @@ def start_pre_match():
     with db_session() as s:
         matches = s.query(Match, Thread)\
             .join(Thread)\
-            .filter(Match.match_state == MatchPeriod.upcoming)\
+            .filter(or_(
+                Match.match_state == MatchPeriod.upcoming,
+                Thread.state == MatchPeriod.upcoming
+            ))\
             .filter(now >= Match.start_time - timedelta(minutes=60))\
             .all()
             
         for (match, thread) in matches:
-            match.match_state = MatchPeriod.pre_match
-            thread.state = MatchPeriod.pre_match
+            if match.match_state == MatchPeriod.upcoming:
+                match.match_state = MatchPeriod.pre_match
+            if thread.state == MatchPeriod.upcoming:
+                thread.state = MatchPeriod.pre_match
     
     if not s.success:
         print_error(s.error)
