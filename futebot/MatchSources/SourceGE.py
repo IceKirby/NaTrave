@@ -127,7 +127,8 @@ class SourceGE(MatchSource):
             block_type = self.get_path_value(b, "data.type", None)
             if block_type == "backstage-video":
                 video_url = "https://globoplay.globo.com/v/" + str(b["data"]["identifier"])
-                duration = round(b["data"]["duration"] / 1000)
+                duration = b["data"]["duration"]
+                duration = 0 if not duration else round(duration / 1000)
                 caption = self.remove_time_text(b["data"]["caption"])
                 
                 if period.is_running() and type == PlayType.normal:
