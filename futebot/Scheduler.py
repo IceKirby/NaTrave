@@ -158,6 +158,10 @@ def schedule_follows():
                     
                 if len(res) > 0:
                     for sch in res:
+                        # Ignore if no date or time found
+                        if not res.date or not res.time:
+                            continue
+                        
                         # Get Match's kick-off time
                         start_time = datetime.strptime(sch.date + " " + sch.time, "%Y-%m-%d %H:%M:%S")
                         
