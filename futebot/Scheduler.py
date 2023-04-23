@@ -159,7 +159,7 @@ def schedule_follows():
                 if len(res) > 0:
                     for sch in res:
                         # Ignore if no date or time found
-                        if not res.date or not res.time:
+                        if not sch.date or not sch.time:
                             continue
                         
                         # Get Match's kick-off time
