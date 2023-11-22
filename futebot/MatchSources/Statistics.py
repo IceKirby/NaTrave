@@ -1,4 +1,5 @@
 stats_translations = {
+    "expected_goals": "Gols Esperados (xG)",
     "ball_possession": "Posse de Bola",
     "shots": "Finalizações",
     "shots_on_target": "Finalizações Certas",
@@ -6,7 +7,10 @@ stats_translations = {
     "woodwork": "Finalizações na Trave",
     "big_chances": "Chances Claras",
     "corners": "Escanteios",
+    "dribbles": "Dribles Certos/Total",
     "crosses": "Cruzamentos",
+    "accurate_crosses": "Cruzamentos Certos",
+    "long_balls": "Bolas Longas Certas/Total",
     "offsides": "Impedimentos",
     "free_kicks": "Tiro Livre",
     "passes": "Passes",
@@ -16,6 +20,7 @@ stats_translations = {
     "fouls": "Faltas",
     "saves": "Defesas de Goleiro",
     "tackles": "Desarmes",
+    "tackles_won": "Desarmes Certos",
     "shots_blocked": "Chutes Bloqueados",
     "throwins": "Arremessos Laterais",
     "goal_kicks": "Tiro de Meta",
@@ -26,7 +31,8 @@ stats_translations = {
 composite_translations = {
     "shots+shots_on_target": "Finalizações Certas/Total",
     "passes+passes_completed": "Passes Certos/Total",
-    "tackles+tackles_won": "Desarmes Certos/Total"
+    "tackles+tackles_won": "Desarmes Certos/Total",
+    "crosses+accurate_crosses": "Cruzamentos Certos/Total"
 }
 table_row_template = "{home} | {stat} | {away}  \n"
 
@@ -58,7 +64,8 @@ class Statistics:
         self.simple_stat_line(lines, "ball_possession")
         
         # Offense
-        self.composite_stat_line(lines, "shots", "shots_on_target")
+        self.simple_stat_line(lines, "expected_goals")
+        self.accuracy_stat_line(lines, "shots", "shots_on_target")
         self.simple_stat_line(lines, "shots_off_target")
         self.simple_stat_line(lines, "woodwork")
         self.simple_stat_line(lines, "shots_blocked")
@@ -66,9 +73,11 @@ class Statistics:
         self.simple_stat_line(lines, "big_chances")
         
         # Build-up
-        self.composite_stat_line(lines, "passes", "passes_completed")
+        self.accuracy_stat_line(lines, "passes", "passes_completed")
+        self.simple_stat_line(lines, "dribbles")
+        self.simple_stat_line(lines, "long_balls")
         self.simple_stat_line(lines, "corners")
-        self.simple_stat_line(lines, "crosses")
+        self.accuracy_stat_line(lines, "crosses", "accurate_crosses")
         self.simple_stat_line(lines, "offsides")
         self.simple_stat_line(lines, "free_kicks")
         self.simple_stat_line(lines, "throwins")
@@ -77,7 +86,7 @@ class Statistics:
         
         # Defense
         self.simple_stat_line(lines, "fouls")
-        self.composite_stat_line(lines, "tackles", "tackles_won")
+        self.accuracy_stat_line(lines, "tackles", "tackles_won")
         self.simple_stat_line(lines, "goal_kicks")
         self.simple_stat_line(lines, "yellow_cards")
         self.simple_stat_line(lines, "red_cards")
@@ -96,7 +105,7 @@ class Statistics:
                 away=self.away_stats[stat]
             ))
     
-    def composite_stat_line(self, lines, total, accurate):
+    def accuracy_stat_line(self, lines, total, accurate):
         # Use simple stat if there's no data for the 2 stats needed
         if not total in self.home_stats or not accurate in self.home_stats:
             self.simple_stat_line(lines, total)

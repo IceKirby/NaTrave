@@ -66,7 +66,7 @@ class BaseSchedule:
             home_ratio = self.compare_with_alts(home_team + home_sufix, s.home_team_alts)
             away_ratio = self.compare_with_alts(away_team + away_sufix, s.away_team_alts)
             sum = home_ratio + away_ratio
-                
+            
             # If perfect match is found, just return it immediately
             if sum >= 200:
                 return (s, sum)

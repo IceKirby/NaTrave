@@ -20,11 +20,12 @@ class ScheduleGE(BaseSchedule):
         return self.cached_schedules[day]
     
     def get_raw_schedule(self, day):
-        query = query_format.encode('utf-8');
-        
-        m = hashlib.sha256()
-        m.update(query)
-        hashed = m.hexdigest()
+        # query = query_format.encode('utf-8');
+        # 
+        # m = hashlib.sha256()
+        # m.update(query)
+        # hashed = m.hexdigest()
+        hashed = "a216d962a6b843d5dcb6f60909368d07c6f666bd471e7f378638f0076d938dd4"
         
         req_url = 'https://geql.globo.com/graphql?variables={"params":"'+day+'"}&extensions={"persistedQuery":{"version":1,"sha256Hash":"'+hashed+'"}}'
         

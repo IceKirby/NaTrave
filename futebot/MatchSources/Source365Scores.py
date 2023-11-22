@@ -198,7 +198,7 @@ class Source365Scores(MatchSource):
         elif status_group == 4:
             if self.get_path_value(game, "justEnded", False):
                 return MatchPeriod.post_match, "0"
-            elif status != "Suspenso":
+            elif status not in ["Suspenso", "Interrompido"]:
                 return MatchPeriod.finished, "0"
                 
         minutes = self.get_path_value(game, "preciseGameTime.minutes", 0)
