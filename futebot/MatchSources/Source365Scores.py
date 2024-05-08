@@ -109,12 +109,11 @@ class Source365Scores(MatchSource):
             self.add_broadcast(b["name"])
         
         # Statistics
-        home_stats = self.get_path_value(game, "homeCompetitor.statistics", None)
-        away_stats = self.get_path_value(game, "awayCompetitor.statistics", None)
-        if home_stats:
-            self.set_statistics("home", home_stats)
-        if away_stats:
-            self.set_statistics("away", away_stats)
+        stats = self.fetch_data("https://webws.365scores.com/web/game/stats/?langId=31&games=" + str(self.get_path_value(game, "id", "")))
+        if stats:
+            home_id = self.get_path_value(game, "homeCompetitor.id", None)
+            away_id = self.get_path_value(game, "awayCompetitor.id", None)
+            self.set_statistics(home_id, away_id, self.get_path_value(stats, "statistics", []))
         self.filled_data["stats"] = self.stats.count()
         
         self.was_updated = True
@@ -488,7 +487,7 @@ class Source365Scores(MatchSource):
         
         return ev_period, str(int(ev_time)) + ":00"
     
-    def set_statistics(self, team, data):
+    def set_statistics(self, home_id, away_id, data):
         stats_map = {
             "1": "yellow_cards",
             "2": "red_cards",
@@ -511,12 +510,14 @@ class Source365Scores(MatchSource):
             "21": "passes",
             "23": "saves",
             "24": "big_chances",
-            "25": "woodwork"
+            "25": "woodwork",
+            "76": "expected_goals"
             # "": "tackles_won",
         }
         for d in data:
             id = str(d["id"])
             if id in stats_map:
+                team = "home" if d["competitorId"] == home_id else "away"
                 self.stats.add_stats(team, stats_map[id], d["value"])
     
     ### ####### ###
