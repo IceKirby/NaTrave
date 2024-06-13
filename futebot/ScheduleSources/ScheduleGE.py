@@ -25,9 +25,9 @@ class ScheduleGE(BaseSchedule):
         # m = hashlib.sha256()
         # m.update(query)
         # hashed = m.hexdigest()
-        hashed = "a216d962a6b843d5dcb6f60909368d07c6f666bd471e7f378638f0076d938dd4"
+        hashed = "95ca288f78c49282ccdb6040837eb9540d17f524d09c2f4170c7f0ce0b14255c"
         
-        req_url = 'https://geql.globo.com/graphql?variables={"params":"'+day+'"}&extensions={"persistedQuery":{"version":1,"sha256Hash":"'+hashed+'"}}'
+        req_url = 'https://geql.globo.com/graphql?variables={"date":"'+day+'"}&extensions={"persistedQuery":{"version":1,"sha256Hash":"'+hashed+'"}}'
         
         response = requests.get(req_url)
         return response.json()
@@ -63,8 +63,8 @@ class ScheduleGE(BaseSchedule):
                 elif obj in tour["past"]:
                     match.state = ScheduleState.finished
                 
-                if m["transmission"] and m["transmission"]["period"] and m["transmission"]["period"]["id"]:
-                    match.is_aborted = m["transmission"]["period"]["id"] in ["CANCELADO", "ADIADO", "ABORTADO"]
+                if m["transmission"] and m["transmission"]["broadcastStatus"] and m["transmission"]["broadcastStatus"]["id"]:
+                    match.is_aborted = m["transmission"]["broadcastStatus"]["id"] in ["CANCELADO", "ADIADO", "ABORTADO"]
                 
                 match.is_youth_match = self.is_youth_tour(tour_name)
                 match.is_women_match = self.is_women_tour(tour_name)
