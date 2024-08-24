@@ -31,7 +31,7 @@ def register_sub(author, sub_name, lines, pm):
         else:
             raise s.error
     
-def unregister_sub(author, sub, lines, pm):
+def unregister_sub(author, sub_name, lines, pm):
     with db_session() as s:
         sub = s.query(Sub).filter(Sub.sub_name.ilike(sub_name)).first()
         s.delete(sub)

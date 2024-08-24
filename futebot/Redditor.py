@@ -70,7 +70,7 @@ def send_pm(user, message, pm, is_retry=False):
             pm.reply(body=message)
         else:
             if is_sub_name(user):
-                reddit.subreddit(user).message(subject=title, message=message)
+                reddit.subreddit(format_sub_name(user)).message(subject=title, message=message)
             else:
                 reddit.redditor(user).message(subject=title, message=message)
     except Exception as e:
