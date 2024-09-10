@@ -73,6 +73,11 @@ def send_pm(user, message, pm, is_retry=False):
                 reddit.subreddit(format_sub_name(user)).message(subject=title, message=message)
             else:
                 reddit.redditor(user).message(subject=title, message=message)
+    except RedditAPIException as exception:
+        for subexc in exception.items:
+             if subexc.error_type == "USER_DOESNT_EXIST":
+                print("User u/{} not found, cancelling PM".format(user))
+                return True
     except Exception as e:
         print_error(e)
         if not is_retry:
