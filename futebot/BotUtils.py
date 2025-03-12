@@ -57,7 +57,10 @@ def convert_date(str):
     month = int(parts[1])
     year = today.year
     if len(parts) > 2:
-        year = int("20" + parts[2]) if len(parts[2]) == 2 else int(parts[2])
+        try:
+            year = int("20" + parts[2]) if len(parts[2]) == 2 else int(parts[2])
+        except:
+            year = today.year
 
     if month <= 0 or month > 12:
         month = today.month

@@ -25,7 +25,7 @@ class ScheduleGE(BaseSchedule):
         # m = hashlib.sha256()
         # m.update(query)
         # hashed = m.hexdigest()
-        hashed = "95ca288f78c49282ccdb6040837eb9540d17f524d09c2f4170c7f0ce0b14255c"
+        hashed = "c1b3f92ec73ae582e54ed74125a92b9fa8310083ca25d37fa89801d8833e8e8c"
         
         req_url = 'https://geql.globo.com/graphql?variables={"date":"'+day+'"}&extensions={"persistedQuery":{"version":1,"sha256Hash":"'+hashed+'"}}'
         
@@ -69,8 +69,8 @@ class ScheduleGE(BaseSchedule):
                 match.is_youth_match = self.is_youth_tour(tour_name)
                 match.is_women_match = self.is_women_tour(tour_name)
                 
-                match.home_team = m["homeTeam"]["popularName"]
-                match.away_team = m["awayTeam"]["popularName"]
+                match.home_team = m["firstContestant"]["popularName"]
+                match.away_team = m["secondContestant"]["popularName"]
                 
                 match.home_team_alts = self.get_alt_names(match.home_team)
                 match.away_team_alts = self.get_alt_names(match.away_team)

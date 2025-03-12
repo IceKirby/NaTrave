@@ -178,7 +178,8 @@ class SourceGE(MatchSource):
         time_minutes_mod = zero_pad(str(time.hour * 60 + time.minute), 4)
         time_seconds = zero_pad(str(time.second), 2)
         
-        return int(period_mod + minutes_mod + seconds_mod + time_minutes_mod + time_seconds)
+        time_raw = period_mod + minutes_mod + seconds_mod + time_minutes_mod + time_seconds
+        return int(time_raw.replace(" ", ""))
     
     def fix_boring_feed(self):
         normal_count = 0
