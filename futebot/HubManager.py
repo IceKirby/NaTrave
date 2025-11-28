@@ -2,23 +2,22 @@ from DB import db_session
 from Models import Hub, Sub
 from ErrorPrinter import print_error
 from HubData import HubData
+from sqlalchemy import or_
 import BotUtils
 
 ongoing_hubs = {}
 
 # Removes old Hub entries from DB
-def clear_old_hubs():
-    today = BotUtils.today()
-    
+def clear_old_hubs(cutoff):
     with db_session() as s:
-        old = s.query(Hub).filter(Hub.date < today).delete(synchronize_session=False)
+        old = s.query(Hub).filter(Hub.date < cutoff).delete(synchronize_session=False)
     
     if not s.success:
         print_error(s.error)
     
     to_pop = []
     for id,hub in ongoing_hubs.items():
-        if hub.date < today:
+        if hub.date < cutoff:
             to_pop.append(id)
     
     for p in to_pop:
@@ -28,7 +27,6 @@ def clear_old_hubs():
 # Check which HUB threads need to be created/updated
 def run_hub_threads():
     today = BotUtils.today()
-    tomorrow = BotUtils.tomorrow()
     
     with db_session() as s:
         # Get subs with the Match Hub option enabled
@@ -42,7 +40,7 @@ def run_hub_threads():
         
         for sub in pending:
             try:
-                create_or_update_hub(s, sub, today, tomorrow)
+                process_hubs(s, sub, today)
             except Exception as e:
                 print_error(e)
     
@@ -50,20 +48,36 @@ def run_hub_threads():
         print_error(s.error)
 
 # Create or update HUB thread
-def create_or_update_hub(s, sub, today, tomorrow):
+def process_hubs(s, sub, today):
+    # Create Hub DB entry if needed
+    create_hub(s, sub, today)
+
+    # Get active Hubs
+    hubs = s.query(Hub)\
+        .filter(Hub.sub == sub.id)\
+        .filter(or_(
+            Hub.date == today,
+            Hub.finished == False
+        ))
+    
+    # Update each active hub
+    for hub in hubs:
+        update_hub(s, hub, sub, hub.date)
+
+def create_hub(s, sub, today):
     hub = s.query(Hub)\
         .filter(Hub.sub == sub.id)\
         .filter(Hub.date == today)\
         .first()
     
-    # Create Hub DB entry if needed
     if not hub:
         hub = Hub(sub=sub.id, date=today)
         s.add(hub)
     
-    # Get Hub Data object (or create if needed)
+def update_hub(s, hub, sub, date):
+# Get Hub Data object (or create if needed)
     if not hub.id in ongoing_hubs:
-        hub_data = HubData(sub.id, today, hub.url)
+        hub_data = HubData(sub.id, date, hub.url)
         ongoing_hubs[hub.id] = hub_data
     hub_data = ongoing_hubs[hub.id]
     
@@ -76,3 +90,6 @@ def create_or_update_hub(s, sub, today, tomorrow):
             hub_data.create_thread(s, hub, sub)
         else:
             hub_data.update_thread(s, hub, sub)
+    
+    if hub_data.is_hub_finished():
+        hub.finished = True

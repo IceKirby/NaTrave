@@ -22,6 +22,9 @@ def tomorrow():
 def yesterday():
     return today() - timedelta(days=1)
 
+def days_from_today(num):
+    return today() + timedelta(days=num)
+
 # Removes seconds from time format because who needs them?
 def format_time(raw):
     parts = raw.split(":")

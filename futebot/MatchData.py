@@ -1,6 +1,6 @@
 import math
 from ErrorPrinter import print_error
-from FormattingData.PostTemplate import match_template, post_match_template, post_title_template, match_icons
+from FormattingData.PostTemplate import match_template, post_match_template, post_title_template, aggregated_score_template, match_icons
 from BotUtils import format_str, zero_pad, format_time, format_date
 
 from MatchSources.SourceGE import SourceGE
@@ -150,7 +150,15 @@ class Match:
         period = self.get_match_period()
         match_time = self.choose_value("match_time", "state.time", "0")
         stats_source = self.choose_source("stats")
-        
+
+
+        home_aggregated = self.choose_value("aggregated_score", "state.home_aggregated", None)
+        away_aggregated = self.choose_value("aggregated_score", "state.away_aggregated", None)
+        aggregated_score = "" if home_aggregated == None else format_str(aggregated_score_template, 
+            CasaAgregado=home_aggregated, 
+            ForaAgregado=away_aggregated
+        )
+
         return format_str(template, 
             Campeonato = self.choose_value("tour", "tour.name", "N/D"),
             CampeonatoFase = self.choose_value("tour", "tour.stage", "N/D"),
@@ -160,7 +168,7 @@ class Match:
             Mandante = base_source.home_team.name,
             TimeFora = base_source.away_team.name,
             Visitante = base_source.away_team.name,
-            
+            EscalacaoTemporaria=" (Escalações não confirmadas)" if base_source.temp_squads else "",
             TimeCasaTitulares = home_team_starting,
             TimeCasaReservas = home_team_subs,
             TimeCasaTreinador = self.choose_value("tour", "home_team.coach", "N/D"),
@@ -171,6 +179,7 @@ class Match:
             TimeForaGols = self.get_goals_list("away"),
             TimeCasaEsquema = self.choose_value("tour", "home_team.formation", "N/D"),
             TimeForaEsquema = self.choose_value("tour", "away_team.formation", "N/D"),
+            PlacarAgregado = aggregated_score,
             Arbitragem = self.get_referees(),
             PlacarFinal = self.get_final_score(),
             PlacarCasa = self.get_team_score("home"),
@@ -303,7 +312,7 @@ class Match:
         elif period in [MatchPeriod.preparing_penalties, MatchPeriod.penalties]:
             return "Pênaltis"
         else:
-            minutes = time.split(":")[0]
+            minutes = str(time).split(":")[0]
             if period == MatchPeriod.first_half:
                 label = "1T"
             elif period == MatchPeriod.second_half:
@@ -526,7 +535,7 @@ class Match:
 def get_path_value(obj, path, default_value=None):
     for i in path.split("."):
         val = getattr(obj, i, None)
-        if not val:
+        if val == None:
             return default_value
         
         obj = val

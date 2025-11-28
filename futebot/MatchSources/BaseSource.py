@@ -7,7 +7,7 @@ from Models import MatchPeriod
 from MatchSources.Statistics import Statistics
 
 InfoDetails = namedtuple('InfoDetails', 'date time stadium')
-InfoState = namedtuple('InfoState', 'period time home_score away_score home_penalty away_penalty')
+InfoState = namedtuple('InfoState', 'period time home_score away_score home_penalty away_penalty home_aggregated away_aggregated')
 InfoTour = namedtuple('InfoTour', 'name stage round')
 InfoTeam = namedtuple('InfoTeam', 'name id players coach formation starting substitutes')
 InfoPlayer = namedtuple('InfoPlayer', 'name id shirt_num position team')
@@ -68,6 +68,7 @@ class MatchSource:
     
     def reset_data(self):
         self.was_updated = False
+        self.temp_squads = True
         
         # Data Completion Tracking
         self.filled_data = {
@@ -79,6 +80,7 @@ class MatchSource:
             "referees": 0,
             
             "score": 0,
+            "aggregated_score": 0,
             "period": 0,
             "match_time": 0,
             "stats": 0,
@@ -136,8 +138,8 @@ class MatchSource:
         if stadium != "N/D":
             self.filled_data["stadium"] = 1
     
-    def set_state(self, period=MatchPeriod.upcoming, time="0", home_score=0, away_score=0, home_penalty=None,  away_penalty=None):
-        self.state = InfoState(period, time, home_score, away_score, home_penalty, away_penalty)
+    def set_state(self, period=MatchPeriod.upcoming, time="0", home_score=0, away_score=0, home_penalty=None,  away_penalty=None, home_aggregated=None, away_aggregated=None):
+        self.state = InfoState(period, time, home_score, away_score, home_penalty, away_penalty, home_aggregated, away_aggregated)
         
         self.filled_data["period"] = period.value
         self.filled_data["match_time"] = 1
@@ -145,6 +147,9 @@ class MatchSource:
             self.filled_data["score"] += 1
         if home_penalty != None:
             self.filled_data["score"] += 1
+        if home_aggregated != None:
+            self.filled_data["aggregated_score"] += 1
+
         
     def set_tour(self, name="N/D", stage="N/D", round="N/D"):
         self.tour = InfoTour(name, stage, round)

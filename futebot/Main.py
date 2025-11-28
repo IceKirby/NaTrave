@@ -48,13 +48,15 @@ def start_up():
         if cache_clear_count > cache_clear_interval:
             Redditor.clear_cached_threads()
             cache_clear_count = 0
-        
+            
         # Functions that only need to be executed once per day
         today = BotUtils.today()
+        db_history_cutoff = BotUtils.days_from_today(-7)
         global last_date
         if today != last_date or SubManager.has_new_follows:
-            # Removes old Match, Threads and Requests from DB
-            Scheduler.clear_old_matches()
+            # Removes old Match, Threads, HUBs and Requests from DB
+            Scheduler.clear_old_data(db_history_cutoff)
+            HubManager.clear_old_hubs(db_history_cutoff)
             
             # Schedule matches according to sub's follows
             # And update date if follows have been scheduled successfully
@@ -64,7 +66,6 @@ def start_up():
                     SubManager.has_new_follows = False
             except Exception as e:
                 print_error(e)
-                
         
         # Checks PMs for user requests
         Redditor.read_pm()
@@ -89,7 +90,6 @@ def start_up():
         MatchManager.finish_matches()
         
         # TODO: Manage HUB Threads
-        HubManager.clear_old_hubs()
         HubManager.run_hub_threads()
         
         # Unpins pinned threads after time has passed
@@ -118,3 +118,4 @@ if __name__ == "__main__":
         print("Program has finished operation.")
     except KeyboardInterrupt:
         print("Terminating program forcefully.")
+

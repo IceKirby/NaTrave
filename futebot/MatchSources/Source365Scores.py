@@ -67,18 +67,22 @@ class Source365Scores(MatchSource):
         # Match State
         state_period, state_time = self.get_period_and_time(game, start_time)
         home_penalty, away_penalty = self.get_penalties_score(game)
+        home_aggregated, away_aggregated = self.get_aggregated_score(game)
         self.set_state(
             period = state_period,
             time = state_time,
             home_score = int(self.get_path_value(game, "homeCompetitor.score", 0)),
             away_score = int(self.get_path_value(game, "awayCompetitor.score", 0)),
             home_penalty = home_penalty,
-            away_penalty = away_penalty
+            away_penalty = away_penalty,
+            home_aggregated = home_aggregated,
+            away_aggregated = away_aggregated
         )
         
         # Teams
         self.set_team_data(True, game, "home")
         self.set_team_data(False, game, "away")
+        self.temp_squads = not self.get_path_value(game, "hasLineups", False)
         
         # Unknown players
         members = self.get_path_value(game, "members", [])
@@ -106,6 +110,8 @@ class Source365Scores(MatchSource):
         # TV Broadcast
         broadcast = self.get_path_value(game, "tvNetworks", [])
         for b in broadcast:
+            if (b["name"] == "bet365"):
+                continue
             self.add_broadcast(b["name"])
         
         # Statistics
@@ -262,7 +268,6 @@ class Source365Scores(MatchSource):
         else:
             return str(minutes) if minutes < 120 else "120+" + str(minutes-120)
             
-    
     def get_penalties_score(self, game):
         stages = self.get_path_value(game, "stages", [])
         for s in stages:
@@ -273,6 +278,15 @@ class Source365Scores(MatchSource):
                     return int(s["homeCompetitorScore"]), int(s["awayCompetitorScore"])
         return None, None
     
+    def get_aggregated_score(self, game):
+        home_aggr = self.get_path_value(game, "homeCompetitor.aggregatedScore", None)
+        away_aggr = self.get_path_value(game, "awayCompetitor.aggregatedScore", None)
+
+        if home_aggr != None:
+            return int(home_aggr), int(away_aggr)
+
+        return None, None
+
     ### #################### ###
     ### Plays Feed Functions ###
     ### #################### ###

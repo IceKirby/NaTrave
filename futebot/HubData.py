@@ -3,9 +3,10 @@ import Redditor
 import BotUtils
 import SubLockManager
 from ErrorPrinter import print_error
-from Models import Sub, Match, Thread, MatchPeriod, SuggestedSort, PendingUnpin
-from FormattingData.PostTemplate import hub_template, hub_tour_group_template, hub_match_template, hub_match_creation_template, hub_match_postponed_template
+from Models import Sub, Match, Thread, MatchPeriod, Hub, SuggestedSort, PendingUnpin
+from FormattingData.PostTemplate import hub_template, hub_tour_group_template, hub_match_template, hub_match_creation_template, hub_match_postponed_template, hub_match_link_untracked, hub_previous_link
 from datetime import timedelta
+from sqlalchemy import or_
 from prawcore.exceptions import Forbidden
 
 class FollowedThread:
@@ -15,6 +16,7 @@ class FollowedThread:
         self.score = match.score
         self.state = thread.state
         self.url = thread.url
+        self.hub_only = thread.hub_only
         self.post_url = thread.post_match_thread
         
 
@@ -28,8 +30,8 @@ class HubData:
         self.pending_creation = False
     
     def find_tracked_matches(self, s):
-        today = BotUtils.today()
-        tomorrow = BotUtils.tomorrow()
+        today = self.date
+        tomorrow = self.date + timedelta(days=1)
         
         threads = s.query(Thread, Match)\
             .join(Match)\
@@ -48,7 +50,7 @@ class HubData:
     
     def create_thread(self, s, hub, sub):
         self.pending_creation = True
-        text = self.get_thread_content(s, sub)
+        text = self.get_thread_content(s, sub, hub.date)
         today = BotUtils.today()
         tomorrow = BotUtils.tomorrow()
         url = self.create_base_thread(sub, text, today)
@@ -71,7 +73,7 @@ class HubData:
         
     def update_thread(self, s, hub, sub):
         try:
-            text = self.get_thread_content(s, sub)
+            text = self.get_thread_content(s, sub, hub.date)
             
             # Get thread if according to Reddit API
             thread_id = Redditor.url_to_thread_id(hub.url)
@@ -112,7 +114,7 @@ class HubData:
             
         return False
     
-    def get_thread_content(self, s, sub):
+    def get_thread_content(self, s, sub, date):
         ids = list(map(lambda t: t.thread_id, self.threads))
         
         threads = s.query(Thread, Match)\
@@ -122,6 +124,15 @@ class HubData:
         
         tour_groups = self.group_threads_by_tour(threads)
         tours_text = self.format_tour_groups(tour_groups)
+
+
+        prev_hub = self.find_previous_hub(s, sub, date)
+        prev_hub_line = ""
+        if prev_hub:
+            prev_hub_line = BotUtils.format_str(hub_previous_link,
+                Data=BotUtils.translate_date(prev_hub.date, False),
+                Link=prev_hub.url
+            )
         
         instr_link = "https://www.reddit.com/r/NaTrave/wiki/requisitar"
         if sub.instructions_link:
@@ -130,11 +141,34 @@ class HubData:
         text = BotUtils.format_str(hub_template,
             Sub=sub.sub_name,
             Torneios=tours_text,
+            HubAnterior=prev_hub_line,
             InstructionsLink=instr_link
         )
         
         return text
     
+    def find_previous_hub(self, s, sub, current_date):
+        prev_hub = s.query(Hub)\
+            .filter(Hub.sub == sub.id)\
+            .filter(Hub.date < current_date)\
+            .filter(Hub.url != None)\
+            .order_by(Hub.date.desc())\
+            .first()
+        
+        return prev_hub
+
+    def is_hub_finished(self):
+        today = BotUtils.today()
+        
+        if self.date >= today:
+            return False
+        
+        for t in self.threads:
+            if t.state < MatchPeriod.finished:
+                return False
+
+        return True
+
     def create_base_thread(self, sub_data, text, today):
         title = BotUtils.format_str(sub_data.hub_title,
             Data=BotUtils.translate_date(today, False)
@@ -207,7 +241,9 @@ class HubData:
         
         score = "x" if match.score == None else match.score
         
-        if not thread.url:
+        if thread.hub_only:
+            links = hub_match_link_untracked
+        elif not thread.url:
             if match.postponed:
                 links = hub_match_postponed_template
             else:
@@ -222,5 +258,5 @@ class HubData:
             Mandante=match.home_team,
             Visitante=match.away_team,
             Placar=score,
-            Links=links,
+            Links=links
         )

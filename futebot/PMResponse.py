@@ -266,6 +266,8 @@ def get_thread_info(match, aborted=False):
     else:
         if aborted:
             return PMResponseText.match_listing_thread_pending_aborted.format(Date=translate_date(match["thread_time"]))
+        elif match["hub_only"]:
+            return PMResponseText.match_listing_thread_hub_only
         else:
             return PMResponseText.match_listing_thread_pending.format(Date=translate_date(match["thread_time"]))
 

@@ -50,7 +50,9 @@ class SourceGE(MatchSource):
             home_score = self.get_path_value(game, "transmissao.jogo_sde.resultados.placar_oficial_mandante", 0),
             away_score = self.get_path_value(game, "transmissao.jogo_sde.resultados.placar_oficial_visitante", 0),
             home_penalty = self.get_path_value(game, "transmissao.jogo_sde.resultados.placar_penaltis_mandante", None),
-            away_penalty = self.get_path_value(game, "transmissao.jogo_sde.resultados.placar_penaltis_visitante", None)
+            away_penalty = self.get_path_value(game, "transmissao.jogo_sde.resultados.placar_penaltis_visitante", None),
+            home_aggregated = None,
+            away_aggregated = None
         )
         
         # Teams
@@ -61,9 +63,9 @@ class SourceGE(MatchSource):
         referees = self.get_path_value(game, "transmissao.jogo.arbitragem", None)
         if referees:
             rolesDict = {"arbitroPrincipal": "Árbitro Principal", "arbitroAssistente1": "Assistente 1", "arbitroAssistente2": "Assistente 2", "quartoArbitro": "Quarto Árbitro"}
-            for key,value in referees.items():
-                if value != None:
-                    self.add_referee(value["nome_popular"], rolesDict[key])
+            for key,value in rolesDict.items():
+                if key in referees:
+                    self.add_referee(referees[key]["nome_popular"], value)
         
         # Plays Feed
         for p in plays:
@@ -100,6 +102,9 @@ class SourceGE(MatchSource):
         players = self.get_path_value(team, "atletas.titulares", []) + self.get_path_value(team, "atletas.reservas", [])
         for player in players:
             self.add_player(side, player["nome_popular"], player["posicao"]["descricao"], player["atleta_id"], player["camisa"])
+        
+        if len(self.get_path_value(team, "atletas.reservas", [])) > 0:
+            self.temp_squads = False
     
     ### #################### ###
     ### Plays Feed Functions ###
@@ -112,6 +117,10 @@ class SourceGE(MatchSource):
         
         # Ignore plays that aren't relevant to the feed
         if type == None:
+            return
+            
+        # Ignore polls
+        if self.has_poll(play):
             return
         
         # Mark a Penalty Shootout play as scored or missed
@@ -158,6 +167,15 @@ class SourceGE(MatchSource):
                 
                 if player:
                     self.add_event_card(period, time, team, player, self.player_name(player), color)
+    
+    def has_poll(self, play):
+        if "blocks" in play and play["blocks"]:
+            for b in play["blocks"]:
+                if b["data"]:
+                    block = b["data"]
+                    if block["type"] == "votacao":
+                        return True
+        return False
     
     # Fix plays' order in list since they are originally sorted by input time,
     # which may differ from the moment it actually happened

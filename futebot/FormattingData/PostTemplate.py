@@ -5,7 +5,7 @@ post_title_template = "[pós-jogo] {Campeonato}: {TimeCasa} {PlacarCasa} x {Plac
 # Thread Template for ongoing matches #
 # ################################### #
 match_template = """
-# [{MomentoPartida}] {TimeCasa} {PlacarFinal} {TimeFora}  
+# [{MomentoPartida}] {TimeCasa} {PlacarFinal} {TimeFora}{PlacarAgregado}  
 **Gols {TimeCasa}:** *{TimeCasaGols}*  
 **Gols {TimeFora}:** *{TimeForaGols}*  
   
@@ -20,7 +20,7 @@ match_template = """
   
 ---  
   
-Escalações:  
+Escalações{EscalacaoTemporaria}:  
   
 | {TimeCasa} ({TimeCasaEsquema}) | {TimeFora} ({TimeForaEsquema}) |  
 | :-- | :-- |  
@@ -37,6 +37,8 @@ Escalações:
 # Lances  
 {Lances}  
 """
+
+aggregated_score_template = """ (Agregado: {CasaAgregado} x {ForaAgregado})"""
 
 # #################################### #
 # Thread Template for upcoming matches
@@ -66,7 +68,7 @@ simple_match_template = """
 # Thread Template for Post-Match threads
 # ###################################### #
 post_match_template = """
-# [Encerrado] {TimeCasa} {PlacarFinal} {TimeFora}  
+# [Encerrado] {TimeCasa} {PlacarFinal} {TimeFora}{PlacarAgregado}  
 **Gols {TimeCasa}:** *{TimeCasaGols}*  
 **Gols {TimeFora}:** *{TimeForaGols}*  
   
@@ -122,6 +124,8 @@ Partidas de hoje que terão Match Threads em r/{Sub}:
 {Torneios}  
   
 &nbsp;  
+
+{HubAnterior}
   
 ---  
   
@@ -139,6 +143,8 @@ hub_tour_group_template = """
 hub_match_template = "- [{Estado}] {Mandante} {Placar} {Visitante} ({Links})"
 hub_match_creation_template = "Tópico será criado às {Horario}"
 hub_match_postponed_template = "Partida foi adiada"
+hub_match_link_untracked = "Partida sem tópico próprio"
+hub_previous_link = "[Link para a Match HUB do dia {Data}]({Link})"
 
 # ################################ #
 # Icons used in match descriptions

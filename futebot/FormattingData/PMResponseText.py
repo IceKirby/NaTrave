@@ -20,6 +20,7 @@ aborted_match_listing = "- [{Tour}] {Home} vs {Away} ({Time}) para {Sub}: {Threa
 match_listing_thread_existing = "[Link do Tópico]({URL})"
 match_listing_thread_pending = "Tópico será criado em {Date}"
 match_listing_thread_pending_aborted = "Tópico seria criado em {Date}"
+match_listing_thread_hub_only = "Partida não terá tópico próprio"
 
 # [COMMAND] REGISTER
 sub_registered = "Subreddit registrado com sucesso: {Name}"

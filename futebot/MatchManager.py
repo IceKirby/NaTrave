@@ -1,7 +1,7 @@
 from datetime import date
 from MatchData import Match as MatchData
 from DB import db_session
-from Models import Match, Thread, MatchPeriod, Sub, PendingUnpin, SuggestedSort
+from Models import Match, Thread, Request, MatchPeriod, Sub, PendingUnpin, SuggestedSort
 from ScheduleSources.ScheduleMatch import ScheduleState
 from MatchSources.BaseSource import MatchPeriod
 from datetime import datetime, timedelta, timezone
@@ -48,6 +48,8 @@ def start_pre_match():
                 match.match_state = MatchPeriod.pre_match
             if thread.state == MatchPeriod.upcoming:
                 thread.state = MatchPeriod.pre_match
+                if thread.hub_only:
+                    fulfill_hub_only_requests(s, thread)
     
     if not s.success:
         print_error(s.error)
@@ -59,7 +61,10 @@ def run_matches():
         ongoing = s.query(Thread, Match, Sub)\
             .join(Match)\
             .join(Sub)\
-            .filter(Thread.url != None)\
+            .filter(or_(
+                Thread.url != None,
+                Thread.hub_only == True
+            ))\
             .filter(or_(
                 Match.ge_url != None,
                 Match.s365_url != None,
@@ -86,7 +91,6 @@ def finish_matches():
             .join(Match)\
             .join(Sub)\
             .filter(Thread.state == MatchPeriod.post_match)\
-            .filter(Thread.post_match_thread != None)\
             .filter(or_(
                 Match.ge_url != None,
                 Match.s365_url != None,
@@ -209,7 +213,7 @@ def finish_match_data(s, match, thread_set):
             update_match_thread(thread, match, db_match)
             
             # Skip thread without post-match
-            if not thread.post_match_thread:
+            if not thread.post_match_thread or thread.hub_only:
                 continue
                 
             try:
@@ -229,19 +233,30 @@ def finish_match_data(s, match, thread_set):
     db_match.post_match_updates -= 1
     
     # Mark match as finished
-    if db_match.post_match_updates == 0:
+    if db_match.post_match_updates <= 0:
         db_match.match_state = MatchPeriod.finished
         match.is_finished = True
         
         # Mark Threads as finished too
         for (thread, match_db, sub) in thread_set:
             thread.state = MatchPeriod.finished
-        
 
 def finish_untracked_match(s, schedule_data, thread, match, sub):
     title = schedule_data.get_post_title(sub.post_title)
     text = schedule_data.get_post_content(simple_post_match_template, thread.url)
     finish_thread(s, thread, sub, title, text)
+
+def fulfill_hub_only_requests(s, thread):
+    requesters = s.query(Request)\
+        .filter(
+            Request.thread == thread.id,
+            Request.fulfilled == None
+        )\
+        .all()
+    
+    today = BotUtils.today()
+    for r in requesters:
+        r.fulfilled = today
 
 # Gets a list of matches, groups them with their respective threads/subs and 
 # run operator function on each of them
@@ -260,8 +275,9 @@ def execute_match_and_threads(s, thread_list, operator):
 # Updates content for a single match thread
 def update_match_thread(thread, match_data, match_db):
     try:
-        if not thread.url:
+        if not thread.url or thread.hub_only:
             return
+        
         # Get thread if according to Reddit API
         thread_id = Redditor.url_to_thread_id(thread.url)
         
@@ -279,16 +295,21 @@ def update_match_thread(thread, match_data, match_db):
 # Post Half-Match stats to a thread as a comment
 def post_half_time_stats(thread, stats_text):
     try:
-        t_id = Redditor.url_to_thread_id(thread.url)
-        Redditor.post_comment({
-            "thread": t_id,
-            "text": stats_text
-        })
+        if thread.url and not thread.hub_only:
+            t_id = Redditor.url_to_thread_id(thread.url)
+            Redditor.post_comment({
+                "thread": t_id,
+                "text": stats_text
+            })
     except Exception as e:
         print_error(e)
 
 # Creates Post-Match Thread and associates it with its respective match thread
 def run_post_match_thread(s, match, db_match, thread, sub):
+    if thread and thread.hub_only:
+        thread.state = MatchPeriod.post_match
+        return
+    
     title = match.print_post_match_title(sub.post_title, db_match)
     text = match.print_post_match(thread.url)
     finish_thread(s, thread, sub, title, text)

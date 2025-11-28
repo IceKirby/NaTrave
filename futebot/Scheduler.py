@@ -9,7 +9,7 @@ from ErrorPrinter import print_error
 from psycopg2.errors import UniqueViolation
 from prawcore.exceptions import Forbidden
 from sqlalchemy import or_, and_
-from Models import Match, Thread, Sub, Request, MatchPeriod, Follow, PendingUnpin, SuggestedSort
+from Models import Match, Thread, Sub, Hub, Request, MatchPeriod, Follow, PendingUnpin, SuggestedSort
 from DB import db_session
 from datetime import datetime, timedelta, timezone
 from FormattingData.PostTemplate import match_no_info
@@ -24,7 +24,7 @@ def clear_cached():
     scheduleGE.clear_cached()
     schedule365.clear_cached()
 
-def request_match(author, sub_name, lines, pm, silent=False):
+def request_match(author, sub_name, lines, pm, silent=False, with_thread=True):
     # Parse the PM
     requested_date, matches = parse_match_request(lines)
 
@@ -62,11 +62,11 @@ def request_match(author, sub_name, lines, pm, silent=False):
             all_matches.append(match)
             
             # Create/Get Thread entry from DB
-            thread = SchedulerHelpers.find_or_create_db_thread(s, match, sub, start_time)
+            thread = SchedulerHelpers.find_or_create_db_thread(s, match, sub, start_time, with_thread)
             all_threads.append(thread)
             
             # Check if Request is already in DB
-            request = SchedulerHelpers.find_or_create_db_request(s, thread, author, silent)
+            request = SchedulerHelpers.find_or_create_db_request(s, thread, author, silent, with_thread)
             all_requests.append(request)
         
         # Formats list of matches for PM response
@@ -87,6 +87,8 @@ def request_match(author, sub_name, lines, pm, silent=False):
 def request_match_silent(author, sub_name, lines, pm):
     return request_match(author, sub_name, lines, pm, True)
     
+def request_match_threadless(author, sub_name, lines, pm):
+    return request_match(author, sub_name, lines, pm, True, False)
 
 def abort_match_thread(author, sub_name, lines, pm):
     # Parse the PM
@@ -169,7 +171,7 @@ def schedule_follows():
                         match = SchedulerHelpers.find_or_create_db_match(s, sch, start_time)
                         
                         # Create/Get Thread entry from DB
-                        thread = SchedulerHelpers.find_or_create_db_thread(s, match, sub, start_time)
+                        thread = SchedulerHelpers.find_or_create_db_thread(s, match, sub, start_time, True)
                     
                     follow.last_used = today
                     
@@ -242,6 +244,7 @@ def create_match_threads():
             .filter(Thread.creation_time <= now)\
             .filter(Thread.state != MatchPeriod.finished)\
             .filter(Sub.locked == False)\
+            .filter(Thread.hub_only == False)\
             .all()
             
         if len(pending) == 0:
@@ -337,21 +340,23 @@ def get_finished_scores():
     if not s.success:
         print_error(s.error)
 
-def clear_old_matches():
+def clear_old_data(cutoff):
     today = BotUtils.today()
     yesterday = BotUtils.yesterday()
     
     with db_session() as s:
         old = s.query(Match)\
-            .filter(or_(
-                and_(
-                    Match.start_time < today,
-                    Match.match_state == MatchPeriod.finished
-                ),
-                Match.start_time < yesterday
-            ))\
+            .filter(
+                Match.start_time < cutoff
+            )\
             .delete(synchronize_session=False)
-    
+        
+        s.query(Hub)\
+            .filter(
+                Hub.date < cutoff
+            )\
+            .delete(synchronize_session=False)
+        
     if not s.success:
         print_error(s.error)
 
@@ -446,8 +451,10 @@ def skip_to_post_match(s, schedule, match, thread, sub):
 def alert_requesters(s, thread, match, sub_name):
     requesters = s.query(Request)\
         .filter(Request.thread == thread.id)\
+        .filter(Request.fulfilled == None)\
         .all()
     
+    today = BotUtils.today()
     for r in requesters:
         requested_data = { 
             "match_id": match.id,
@@ -463,8 +470,10 @@ def alert_requesters(s, thread, match, sub_name):
             PMResponse.add_response(r.name, "requested_match_created", requested_data, None)
         else:
             PMResponse.add_response(r.name, "requested_match_created_silent", requested_data, None)
-            
-        s.delete(r)
+        
+        print("Request fulfilled, today is")
+        print(today)
+        r.fulfilled = today
 
 def get_match_list_response(matches, threads, sub_name):
     result = []
@@ -480,6 +489,7 @@ def get_match_list_response(matches, threads, sub_name):
                     "tour": m.tournament,
                     "time": BotUtils.to_datetime(m.start_time),
                     "thread_time": BotUtils.to_datetime(t.creation_time),
+                    "hub_only": t.hub_only,
                     "url": t.url
                 })
                 continue

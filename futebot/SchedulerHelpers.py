@@ -34,13 +34,16 @@ def create_db_match(s, req, start_time):
     return match
 
 # THREAD FETCH FUNCTIONS
-def find_or_create_db_thread(s, match, sub, start_time):
+def find_or_create_db_thread(s, match, sub, start_time, with_thread):
     # Check if Thread is already in DB
     thread = find_db_thread(s, match, sub)
+
+    if thread and with_thread == True:
+        thread.hub_only = False
     
     # Create Thread DB entry if needed
     if not thread:
-        thread = create_db_thread(s, match, sub, start_time)
+        thread = create_db_thread(s, match, sub, start_time, with_thread)
     
     return thread
 
@@ -50,24 +53,26 @@ def find_db_thread(s, match, sub):
         Thread.sub == sub.id
     ).first()
 
-def create_db_thread(s, match, sub, start_time):
+def create_db_thread(s, match, sub, start_time, with_thread):
     thread = Thread(
         sub=sub.id,
         match_id=match.id,
-        creation_time=start_time - timedelta(minutes=sub.pre_match_time)
+        creation_time=start_time - timedelta(minutes=sub.pre_match_time),
+        hub_only=not with_thread
     )
     s.add(thread)
     return thread
 
 # REQUEST FETCH FUNCTIONS
-def find_or_create_db_request(s, thread, author, silent):
+def find_or_create_db_request(s, thread, author, silent, with_thread):
     # Check if Request is already in DB
     request = find_db_request(s, thread, author)
     
     # Create Request DB entry if needed
     if not request:
-        request = create_db_request(s, thread, author)
+        request = create_db_request(s, thread, author, with_thread)
     request.alert = not silent
+    request.hub_only = not with_thread
     
     return request
 
@@ -77,7 +82,7 @@ def find_db_request(s, thread, author):
         Request.name == author
     ).first()
 
-def create_db_request(s, thread, author):
+def create_db_request(s, thread, author, with_thread):
     request = Request(
         thread=thread.id,
         name=author

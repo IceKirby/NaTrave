@@ -112,5 +112,15 @@ command_data = {
             "mod_only_by_options": True
         },
         "alts": ["partidasilencioso", "jogosilencioso", "matchsilencioso", "threadsilencioso", "matchthreadsilencioso", "agendarsilencioso"]
+    },
+    "tjogo": {
+        "action": Scheduler.request_match_threadless,
+        "options": {
+            "registered_sub": True,
+            "allow_locked": False,
+            "mod_only": False,
+            "mod_only_by_options": True
+        },
+        "alts": ["partidasemtopico", "jogosemtopico", "matchsemtopico", "partidasemmt", "jogosemmt", "matchsemmt"]
     }
 }

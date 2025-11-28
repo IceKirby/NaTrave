@@ -132,6 +132,21 @@ class Follow(Base):
         return "<Follow (sub='{}', team='{}', tour='{}')>"\
                 .format(self.sub, self.team, self.tour)
 
+class BlockedUser(Base):
+    __tablename__ = "blocked_user"
+    id = Column(Integer, primary_key=True)
+    sub = Column(Integer, ForeignKey("sub.id", ondelete="CASCADE"), nullable=False)
+    user = Column(String(255), nullable=False)
+    applied_by = Column(String(255), nullable=False)
+    start_time = Column(DateTime, nullable=False)
+    end_time = Column(DateTime)
+    __table_args__ = (UniqueConstraint('sub', 'user', name='_sub_user_uc'), )
+    parent = relationship('Sub', backref=backref('BlockedUser', passive_deletes=True))
+    
+    def __repr__(self):
+        return "<BlockedUser (user='{}', sub='{}', by='{}', until='{}')>"\
+                .format(self.user, self.sub, self.applied_by, self.end_time)
+
 class Match(Base):
     __tablename__ = "match"
     id = Column(Integer, primary_key=True)
@@ -162,6 +177,7 @@ class Thread(Base):
     url = Column(String(500))
     creation_time = Column(DateTime, nullable=False)
     state = Column(Enum(MatchPeriod), nullable=False, default=MatchPeriod.upcoming)
+    hub_only = Column(Boolean(), nullable=False, default=False)
     post_match_thread = Column(String(500))
     __table_args__ = (UniqueConstraint('sub', 'match_id', name='unique_thread_key'), )
     parent = relationship('Match', backref=backref('Thread', passive_deletes=True))
@@ -174,8 +190,9 @@ class Hub(Base):
     __tablename__ = "hub"
     id = Column(Integer, primary_key=True)
     sub = Column(Integer, ForeignKey("sub.id", ondelete="CASCADE"), nullable=False)
-    date = Column(Date, nullable=False)
+    date = Column(DateTime, nullable=False)
     url = Column(String(500))
+    finished = Column(Boolean(), nullable=False, default=False)
     parent = relationship('Sub', backref=backref('Hub', passive_deletes=True))
 
 class Request(Base):
@@ -184,6 +201,8 @@ class Request(Base):
     thread = Column(Integer, ForeignKey("thread.id", ondelete="CASCADE"), nullable=False)
     name = Column(String(255), nullable=False)
     alert = Column(Boolean(), nullable=False, default=True)
+    fulfilled = Column(DateTime, nullable=True)
+    hub_only = Column(Boolean(), nullable=False, default=False)
     __table_args__ = (UniqueConstraint('name', 'thread', name='unique_request_key'), )
     parent = relationship('Thread', backref=backref('Request', passive_deletes=True))
     

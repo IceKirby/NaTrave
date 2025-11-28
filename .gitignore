@@ -8,3 +8,6 @@ app/
 *.pytest_cache
 fly.toml
 futebot/Main.py.py
+.venv/
+alembic.ini
+alembic/
