@@ -62,6 +62,10 @@ def subscribe_sub(author, sub_name, lines, pm):
         PMResponse.add_response(author, "subscribe_invalid_format", sub_name, pm)
         return True
     
+    if groups["team"][0] == "" and groups["tour"][0] == "":
+        PMResponse.add_response(author, "subscribe_invalid_format", sub_name, pm)
+        return True
+    
     subs_data = { "sub": sub_name, "team": groups["team"], "tour": groups["tour"] }
     with db_session() as s:
         new_follows = []

@@ -93,6 +93,9 @@ class BaseSchedule:
         if not schedule:
             return None
         
+        if team == "" and tour == "":
+            return None
+        
         team = normalize_name(team)
         tour = normalize_name(tour)
         
