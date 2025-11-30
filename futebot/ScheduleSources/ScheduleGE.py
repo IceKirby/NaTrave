@@ -53,7 +53,7 @@ class ScheduleGE(BaseSchedule):
                 match = ScheduleMatch()
                 match.date = m["startDate"]
                 match.time = m["startHour"]
-                match.tour = tour_name
+                match.tour = self.get_fixed_tour_name(tour_name)
                 
                 
                 if obj in tour["future"]:
@@ -121,6 +121,6 @@ class ScheduleGE(BaseSchedule):
 
     def get_alt_names(self, name):
         result = [name]
-        alt_names = NameTranslator.get_alt_names(name)
+        alt_names = NameTranslator.get_alt_club_names(name)
         
         return list(set(result + alt_names))

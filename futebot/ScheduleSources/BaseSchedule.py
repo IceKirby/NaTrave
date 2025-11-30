@@ -1,4 +1,5 @@
 import requests
+import NameTranslator
 from ScheduleSources.ScheduleMatch import ScheduleMatch
 from BotUtils import normalize_name
 from ErrorPrinter import print_error
@@ -123,3 +124,9 @@ class BaseSchedule:
             if f > highest:
                 highest = f
         return highest
+    
+    def get_fixed_tour_name(self, tour_name):
+        alt_names = NameTranslator.get_alt_tour_names(tour_name)
+        if len(alt_names) == 0:
+            return tour_name
+        return alt_names[0]

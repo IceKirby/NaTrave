@@ -145,7 +145,7 @@ def finish_untracked_matches():
 def run_isolated_post_match(s, match, thread, sub):
     match_data = get_or_create_match_data(match.id)
     if match_data.update_data():
-        title = match_data.print_post_match_title(sub, match)
+        title = match_data.print_post_match_title(sub.post_title, match)
         text = match_data.print_post_match(thread.url)
         finish_thread(s, None, sub, title, text)
 

@@ -156,7 +156,9 @@ def schedule_follows():
             for follow,sub in follows:
                 res = scheduleGE.find_followed_match(today, follow.team, follow.tour)
                 if res == None:
-                    return False
+                    res = schedule365.find_followed_match(today, follow.team, follow.tour)
+                    if res == None:
+                        return False
                     
                 if len(res) > 0:
                     for sch in res:
@@ -471,8 +473,6 @@ def alert_requesters(s, thread, match, sub_name):
         else:
             PMResponse.add_response(r.name, "requested_match_created_silent", requested_data, None)
         
-        print("Request fulfilled, today is")
-        print(today)
         r.fulfilled = today
 
 def get_match_list_response(matches, threads, sub_name):

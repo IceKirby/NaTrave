@@ -48,7 +48,7 @@ class Schedule365Scores(BaseSchedule):
             
             match.date = start_time.strftime("%Y-%m-%d")
             match.time = start_time.strftime("%H:%M:00")
-            match.tour = m["competitionDisplayName"]
+            match.tour = self.get_fixed_tour_name(m["competitionDisplayName"])
             match.is_aborted = m["statusText"] in ["Adiado", "Cancelado", "Abortado"]
             
             if m["statusGroup"] == 2:
@@ -123,9 +123,9 @@ def get_alt_names(data, name_sufix):
     
     # Get alternative names, adding sufix if necessary
     if name_sufix == "":
-        alt_names = NameTranslator.get_alt_names(data["name"])
+        alt_names = NameTranslator.get_alt_club_names(data["name"])
     else:
-        alt_names = NameTranslator.get_alt_names(remove_name_sufix(data["name"]))
+        alt_names = NameTranslator.get_alt_club_names(remove_name_sufix(data["name"]))
         alt_names = list(map(lambda x: x + name_sufix, alt_names))
     
     result = list(set(result + alt_names))
