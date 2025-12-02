@@ -139,6 +139,15 @@ def update_thread(data):
     submission = reddit.submission(id=id)
     submission.edit(text)
 
+def delete_thread(thread_url):
+    try:
+        submission = reddit.submission(url_to_thread_id(thread_url))
+        submission.delete()
+        return True
+    except Exception as e:
+        print_error(e)
+        return False
+
 def set_thread_sticky(thread_id, state=True):
     try:
         submission = reddit.submission(id=thread_id)

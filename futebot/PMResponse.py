@@ -1,7 +1,6 @@
 import FormattingData.PMResponseText as PMResponseText
 import Redditor
-from BotUtils import format_user_name, readable
-from BotUtils import translate_date
+from BotUtils import format_user_name, readable, translate_date, format_date_short
 from datetime import datetime
 from DB import db_session
 from Models import UnsentPM
@@ -78,6 +77,11 @@ def format_response_data(user, resp):
         result.append(PMResponseText.request_match_no_match.format(Name=to_sub(resp.data["request_match_no_match"])))
     if "request_match_invalid_format" in resp.data:
         result.append(PMResponseText.request_match_invalid_format.format(Name=to_sub(resp.data["request_match_invalid_format"])))
+    if "request_match_blocked_user" in resp.data:
+        result.append(PMResponseText.request_match_blocked_user.format(
+            Name=to_sub(resp.data["request_match_blocked_user"][0]["sub"]),
+            Date=translate_date(resp.data["request_match_blocked_user"][0]["date"]),
+        ))
     
     # [COMMAND] Abort Match Thread
     if "abort_match_success" in resp.data:
@@ -88,6 +92,26 @@ def format_response_data(user, resp):
         result.append(PMResponseText.abort_match_error.format(Name=to_sub(resp.data["abort_match_error"])))
     if "abort_match_invalid_format" in resp.data:
         result.append(PMResponseText.abort_match_invalid_format.format(Name=to_sub(resp.data["abort_match_invalid_format"])))
+
+    # [COMMAND] Restart Match Thread
+    if "restart_match_success" in resp.data:
+        result.append(PMResponseText.restart_match_success.format(
+            Matches=format_restart_list(resp.data["restart_match_success"][0])
+        ))
+    if "restart_match_error" in resp.data:
+        result.append(PMResponseText.restart_match_error.format(Name=to_sub(resp.data["restart_match_error"])))
+    if "restart_match_invalid_format" in resp.data:
+        result.append(PMResponseText.restart_match_invalid_format.format(Name=to_sub(resp.data["restart_match_invalid_format"])))
+
+    # [COMMAND] Set HUB Only
+    if "set_hubonly_success" in resp.data:
+        result.append(PMResponseText.set_hubonly_success.format(
+            Matches=format_match_list(resp.data["set_hubonly_success"], True)
+        ))
+    if "set_hubonly_error" in resp.data:
+        result.append(PMResponseText.set_hubonly_error.format(Name=to_sub(resp.data["set_hubonly_error"])))
+    if "hubonly_match_invalid_format" in resp.data:
+        result.append(PMResponseText.hubonly_match_invalid_format.format(Name=to_sub(resp.data["hubonly_match_invalid_format"])))
     
     # [COMMAND] Register
     if "sub_registered" in resp.data:
@@ -143,6 +167,34 @@ def format_response_data(user, resp):
     if "get_follows_fail" in resp.data:
         result.append(PMResponseText.get_follows_fail.format(Name=to_sub(resp.data["get_follows_fail"])))
     
+    # [COMMAND] VIEW REQUESTS
+    if "view_requests_success" in resp.data:
+        sub_name = to_sub(resp.data["view_requests_success"][0]["sub"])
+        result.append(PMResponseText.view_requests_success.format(
+            Name=sub_name,
+            Matches=format_requests_list(resp.data["view_requests_success"])
+        ))
+    if "view_requests_empty" in resp.data:
+        result.append(PMResponseText.view_requests_empty.format(Name=to_sub(resp.data["view_requests_empty"])))
+    if "view_requests_error" in resp.data:
+        result.append(PMResponseText.view_requests_error.format(Name=to_sub(resp.data["view_requests_error"])))
+
+    # [COMMAND] Block User
+    if "block_user_success" in resp.data:
+        sub_name = to_sub(resp.data["block_user_success"][0]["sub"])
+        result.append(PMResponseText.block_user_success.format(
+            Name=sub_name,
+            Blocked=format_block_list(resp.data["block_user_success"])
+        ))
+    if "block_user_error" in resp.data:
+        result.append(PMResponseText.block_user_error.format(
+            Blocked=format_simple_list(resp.data["block_user_error"])
+        ))
+    if "block_user_empty" in resp.data:
+        result.append(PMResponseText.block_user_empty.format(Name=to_sub(resp.data["block_user_empty"])))
+    if "block_user_fail" in resp.data:
+        result.append(PMResponseText.block_user_fail.format(Name=to_sub(resp.data["block_user_fail"])))
+
     # [COMMAND] Config
     if "config_sub_list" in resp.data:
         for x in resp.data["config_sub_list"]:
@@ -219,7 +271,40 @@ def format_match_list(matches, aborted=False):
             Time=translate_date(m["time"]),
             Thread=get_thread_info(m, aborted)
         ))
-    
+    return "  \n".join(result)
+
+def format_block_list(blocks):
+    result = []
+    for b in blocks:
+        result.append(PMResponseText.blocked_user_line.format(
+            Name=b["name"],
+            Date=translate_date(b["end_date"]),
+            User=b["applied_by"],
+            Start=format_date_short(b["start_date"])
+        ))
+    return "  \n".join(result)
+
+def format_requests_list(requests):
+    result = []
+    for r in requests:
+        result.append(PMResponseText.view_request_line.format(
+            Date=format_date_short(r["date"]),
+            User=r["user"],
+            Home=r["home_team"],
+            Away=r["away_team"],
+            Tour=r["tour"],
+            HubOnly="Sim" if r["hub_only"] == False else "Não"
+        ))
+    return "  \n".join(result)
+
+def format_restart_list(requests):
+    result = []
+    for key,value in requests.items():
+        result.append(PMResponseText.restart_match_line.format(
+            Home=value["home"],
+            Away=value["away"],
+            Tour=value["tour"]
+        ))
     return "  \n".join(result)
 
 def format_subscribe_list(subs):
@@ -235,6 +320,9 @@ def format_subscribe_list(subs):
         return PMResponseText.subscribe_team_only.format(Teams=teams)
     elif tours:
         return PMResponseText.subscribe_tour_only.format(Tours=tours)
+
+def format_simple_list(arr):
+    return "  \n".join(list(map(lambda x: "- " + x, arr)))
 
 def format_subscribe_list_all(subs):
     result = []

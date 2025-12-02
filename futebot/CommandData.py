@@ -61,8 +61,59 @@ command_data = {
             "mod_only": True,
             "mod_only_by_options": False
         },
-        "alts": ["cancelar", "anular", "interromper"]
+        "alts": ["encerrar", "parar", "interromper"]
     },
+    "cancelar": {
+        "action": Scheduler.cancel_match_thread,
+        "options": {
+            "registered_sub": True,
+            "allow_locked": False,
+            "mod_only": True,
+            "mod_only_by_options": False
+        },
+        "alts": ["anular", "apagar", "deletar"]
+    },
+    "resumir": {
+        "action": Scheduler.set_thread_to_hub_only,
+        "options": {
+            "registered_sub": True,
+            "allow_locked": False,
+            "mod_only": True,
+            "mod_only_by_options": False
+        },
+        "alts": ["reduzir", "diminuir", "simplificar", "sohub", "apenashub", "somentehub"]
+    },
+    "bloquear": {
+        "action": SubManager.block_user,
+        "options": {
+            "registered_sub": True,
+            "allow_locked": False,
+            "mod_only": True,
+            "mod_only_by_options": False
+        },
+        "alts": ["bloqueio", "mutar", "banir"]
+    },
+    "reiniciar": {
+        "action": Scheduler.restart_match,
+        "options": {
+            "registered_sub": True,
+            "allow_locked": False,
+            "mod_only": True,
+            "mod_only_by_options": False
+        },
+        "alts": ["recomecar", "arrumar"]
+    },
+    "pedidos": {
+        "action": Scheduler.view_requests,
+        "options": {
+            "registered_sub": True,
+            "allow_locked": False,
+            "mod_only": True,
+            "mod_only_by_options": False
+        },
+        "alts": []
+    },
+
     "configurar": {
         "action": SubManager.config_sub,
         "options": {

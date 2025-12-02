@@ -9,7 +9,7 @@ from ErrorPrinter import print_error
 from psycopg2.errors import UniqueViolation
 from prawcore.exceptions import Forbidden
 from sqlalchemy import or_, and_
-from Models import Match, Thread, Sub, Hub, Request, MatchPeriod, Follow, PendingUnpin, SuggestedSort
+from Models import Match, Thread, Sub, Hub, Request, MatchPeriod, Follow, PendingUnpin, SuggestedSort, BlockedUser
 from DB import db_session
 from datetime import datetime, timedelta, timezone
 from FormattingData.PostTemplate import match_no_info
@@ -48,6 +48,20 @@ def request_match(author, sub_name, lines, pm, silent=False, with_thread=True):
     with db_session() as s:
         # Get sub info
         sub = s.query(Sub).filter(Sub.sub_name.ilike(sub_name)).first()
+
+        # Check if user is blocked from requesting on this sub
+        is_blocked = s.query(BlockedUser)\
+            .filter(BlockedUser.sub == sub.id)\
+            .filter(BlockedUser.user.ilike(BotUtils.format_user_name(author)))\
+            .filter(BlockedUser.end_time >= BotUtils.now())\
+            .first()
+        
+        if is_blocked:
+            PMResponse.add_response(author, "request_match_blocked_user", {
+                "sub": sub_name,
+                "date": is_blocked.end_time
+            }, pm)
+            return True
         
         all_matches = []
         all_threads = []
@@ -90,47 +104,99 @@ def request_match_silent(author, sub_name, lines, pm):
 def request_match_threadless(author, sub_name, lines, pm):
     return request_match(author, sub_name, lines, pm, True, False)
 
+def restart_match(author, sub_name, lines, pm):
+    # Parse the PM
+    requested_date, matches = parse_match_request(lines)
+
+    # Check if a valid result was found
+    if matches == None or len(matches) == 0:
+        PMResponse.add_response(author, "restart_match_invalid_format", sub_name, pm)
+        return True
+    
+    with db_session() as s:
+        # Get sub info
+        sub = s.query(Sub).filter(Sub.sub_name.ilike(sub_name)).first()
+
+        today = BotUtils.today()
+        tomorrow = BotUtils.tomorrow()
+        
+        all_matches = {}
+
+        for req in matches:
+            # Find threads with the requested teams
+            threads = s.query(Thread, Match)\
+                .join(Match)\
+                .filter(Match.home_team == req["home"])\
+                .filter(Match.away_team == req["away"])\
+                .filter(Match.start_time >= today)\
+                .filter(Match.start_time <= tomorrow)\
+                .filter(Match.match_state >= MatchPeriod.post_match)\
+                .all()
+            
+            if len(threads) > 0:
+                for t,m in threads:
+                    m.state = MatchPeriod.upcoming
+                    m.end_time = None
+
+                    t.state = MatchPeriod.upcoming
+
+                    if t.post_match_thread:
+                        Redditor.delete_thread(t.post_match_thread)
+                        t.post_match_thread = None
+
+                    all_matches[m.id] = {
+                        "home": m.home_team,
+                        "away": m.away_team,
+                        "tour": m.tournament
+                    }
+
+    if s.success:
+        if len(all_matches) > 0:
+            PMResponse.add_response(author, "restart_match_success", all_matches, pm)
+        else:
+            PMResponse.add_response(author, "restart_match_error", sub_name, pm)
+        return True
+    else:
+        print_error(s.error)
+        PMResponse.add_response(author, "restart_match_error", sub_name, pm)
+        return True
+
 def abort_match_thread(author, sub_name, lines, pm):
     # Parse the PM
     requested_date, matches = parse_match_request(lines)
 
     # Check if a valid result was found
-    if matches == None:
+    if matches == None or len(matches) == 0:
         PMResponse.add_response(author, "abort_match_invalid_format", sub_name, pm)
         return True
-
-    # Find requested matches on GE Agenda or 365Scores
-    try:
-        found_matches = find_requested_matches(requested_date, matches)
-    except Exception as e:
-        print_error(e)
-        return False
     
-    if len(found_matches) == 0:
-        PMResponse.add_response(author, "request_match_no_match", sub_name, pm)
-        return True
-        
     # Finds match entry and thread to abort
     with db_session() as s:
         # Get sub info
         sub = s.query(Sub).filter(Sub.sub_name.ilike(sub_name)).first()
+
+        today = BotUtils.to_day_start(requested_date)
+        tomorrow = today + timedelta(days=1)
         
-        all_matches = []
         all_threads = []
-        
-        # Check each requested match
-        for req in found_matches:
-            # Get Match's kick-off time
-            start_time = datetime.strptime(req.date + " " + req.time, "%Y-%m-%d %H:%M:%S")
-            match = SchedulerHelpers.find_db_match(s, req, start_time)
+        all_matches = []
+
+        for req in matches:
+            # Find threads with the requested teams
+            threads = s.query(Thread, Match)\
+                .join(Match)\
+                .filter(Thread.sub == sub.id)\
+                .filter(Match.home_team == req["home"])\
+                .filter(Match.away_team == req["away"])\
+                .filter(Match.start_time >= today)\
+                .filter(Match.start_time <= tomorrow)\
+                .all()
             
-            if match:
-                thread = SchedulerHelpers.find_db_thread(s, match, sub)
-                
-                if thread:
-                    thread.state = MatchPeriod.finished
-                    all_matches.append(match)
-                    all_threads.append(thread)
+            if len(threads) > 0:
+                for t,m in threads:
+                    t.state = MatchPeriod.finished
+                    all_matches.append(m)
+                    all_threads.append(t)
         
         # Formats list of matches for PM response
         requested_data = get_match_list_response(all_matches, all_threads, sub_name)
@@ -141,6 +207,164 @@ def abort_match_thread(author, sub_name, lines, pm):
     else:
         print_error(s.error)
         PMResponse.add_response(author, "abort_match_error", sub_name, pm)
+        return True
+
+def cancel_match_thread(author, sub_name, lines, pm):
+    # Parse the PM
+    requested_date, matches = parse_match_request(lines)
+
+    # Check if a valid result was found
+    if matches == None or len(matches) == 0:
+        PMResponse.add_response(author, "abort_match_invalid_format", sub_name, pm)
+        return True
+        
+    # Finds match entry and thread to abort
+    with db_session() as s:
+        # Get sub info
+        sub = s.query(Sub).filter(Sub.sub_name.ilike(sub_name)).first()
+
+        today = BotUtils.to_day_start(requested_date)
+        tomorrow = today + timedelta(days=1)
+        
+        all_threads = []
+        all_matches = []
+
+        for req in matches:
+            # Find threads with the requested teams
+            threads = s.query(Thread, Match)\
+                .join(Match)\
+                .filter(Thread.sub == sub.id)\
+                .filter(Match.home_team == req["home"])\
+                .filter(Match.away_team == req["away"])\
+                .filter(Match.start_time >= today)\
+                .filter(Match.start_time <= tomorrow)\
+                .all()
+            
+            if len(threads) > 0:
+                for t,m in threads:
+                    all_matches.append(m)
+                    all_threads.append(t)
+        
+        # Formats list of matches for PM response
+        requested_data = get_match_list_response(all_matches, all_threads, sub_name)
+
+        # Actually delete the threads
+        if len(all_threads) > 0:
+            for t in all_threads:
+                if t.url:
+                    Redditor.delete_thread(t.url)
+                if t.post_match_thread:
+                    Redditor.delete_thread(t.post_match_thread)
+                s.delete(t)
+
+    if s.success:
+        PMResponse.add_response(author, "abort_match_success", requested_data, pm)
+        return True
+    else:
+        print_error(s.error)
+        PMResponse.add_response(author, "abort_match_error", sub_name, pm)
+        return True
+
+def set_thread_to_hub_only(author, sub_name, lines, pm):
+    # Parse the PM
+    requested_date, matches = parse_match_request(lines)
+
+    # Check if a valid result was found
+    if matches == None or len(matches) == 0:
+        PMResponse.add_response(author, "hubonly_match_invalid_format", sub_name, pm)
+        return True
+        
+    # Finds match entry and thread to set as HUB only
+    with db_session() as s:
+        # Get sub info
+        sub = s.query(Sub).filter(Sub.sub_name.ilike(sub_name)).first()
+
+        today = BotUtils.to_day_start(requested_date)
+        tomorrow = today + timedelta(days=1)
+        
+        all_threads = []
+        all_matches = []
+
+        for req in matches:
+            # Find threads with the requested teams
+            threads = s.query(Thread, Match)\
+                .join(Match)\
+                .filter(Thread.sub == sub.id)\
+                .filter(Match.home_team == req["home"])\
+                .filter(Match.away_team == req["away"])\
+                .filter(Match.start_time >= today)\
+                .filter(Match.start_time <= tomorrow)\
+                .all()
+            
+            if len(threads) > 0:
+                for t,m in threads:
+                    if t.hub_only == False:
+                        if t.url != None:
+                            if Redditor.delete_thread(t.url):
+                                t.url = None
+                            else:
+                                continue
+                        if t.post_match_thread != None:
+                            if Redditor.delete_thread(t.post_match_thread):
+                                t.post_match_thread = None
+                    
+                        t.hub_only = True
+
+                        all_matches.append(m)
+                        all_threads.append(t)
+        
+        # Formats list of matches for PM response
+        requested_data = get_match_list_response(all_matches, all_threads, sub_name)
+    
+    if s.success:
+        if len(requested_data) > 0:
+            PMResponse.add_response(author, "set_hubonly_success", requested_data, pm)
+        else:
+            PMResponse.add_response(author, "set_hubonly_error", sub_name, pm)
+        return True
+    else:
+        print_error(s.error)
+        PMResponse.add_response(author, "set_hubonly_error", sub_name, pm)
+        return True
+
+def view_requests(author, sub_name, lines, pm):
+    with db_session() as s:
+        all_requests = s.query(Request, Thread, Match, Sub)\
+            .select_from(Request)\
+            .join(Thread, Request.thread == Thread.id)\
+            .join(Match, Thread.match_id == Match.id)\
+            .join(Sub, Sub.id == Thread.sub)\
+            .filter(Sub.sub_name.ilike(sub_name))\
+            .order_by(Match.start_time)\
+            .all()
+        
+        all_matches = []
+        all_threads = []
+
+        requested_data = []
+        
+        # Check each requested match
+        for req,thread,match,sub in all_requests:
+            req_data = {
+                "user": req.name,
+                "sub": sub.sub_name,
+                "date": match.start_time,
+                "home_team": match.home_team,
+                "away_team": match.away_team,
+                "tour": match.tournament,
+                "hub_only": req.hub_only
+            }
+            requested_data.append(req_data)
+    
+    if s.success:
+        if len(requested_data) == 0:
+            PMResponse.add_response(author, "view_requests_empty", sub_name, pm)
+        else:
+            PMResponse.add_response(author, "view_requests_success", requested_data, pm)
+        return True
+    else:
+        print_error(s.error)
+        PMResponse.add_response(author, "view_requests_error", sub_name, pm)
         return True
 
 def schedule_follows():

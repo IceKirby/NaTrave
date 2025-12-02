@@ -5,10 +5,10 @@ import Redditor
 from ErrorPrinter import print_error
 from psycopg2.errors import UniqueViolation
 from sqlalchemy import and_, func
-from Models import Sub, Follow
+from Models import Sub, Follow, BlockedUser
 from DB import db_session
 from SubredditConfigOpt import config_options
-from BotUtils import strip_command_name, convert_date
+from BotUtils import now, strip_command_name, convert_date, to_datetime_from_input, format_user_name
 from praw.exceptions import InvalidURL
 
 has_new_follows = False
@@ -113,6 +113,96 @@ def unsubscribe_sub(author, sub_name, lines, pm):
         return True
     else:
         PMResponse.add_response(author, "unsubscribe_fail", subs_data, pm)
+        return True
+
+def block_user(author, sub_name, lines, pm):
+    targets = split_params(lines)
+    with db_session() as s:
+        # Get Sub info from DB
+        sub = s.query(Sub).filter(Sub.sub_name.ilike(sub_name)).first()
+
+        start_time = now()
+        new_blocks = []
+        block_errors = []
+        blocks_data = []
+
+        if len(targets) == 0:
+            existing_block = s.query(BlockedUser)\
+                .filter(BlockedUser.sub == sub.id)\
+                .filter(BlockedUser.end_time > now())\
+                .order_by(func.lower(BlockedUser.user))\
+                .all()
+
+            for u in existing_block:
+                blocks_data.append({
+                    "sub": sub_name,
+                    "name": u.user,
+                    "applied_by": u.applied_by,
+                    "end_date": u.end_time,
+                    "start_date": u.start_time
+                })
+        else:
+            for target in targets:
+                user = format_user_name(target["param"])
+                duration = to_datetime_from_input(target["value"])
+
+                if duration == None:
+                    block_errors.append(user)
+                    continue
+
+                # Check if there's already a block for this user on this sub
+                existing_block = s.query(BlockedUser)\
+                    .filter(BlockedUser.user.ilike(user))\
+                    .filter(BlockedUser.sub == sub.id)\
+                    .all()
+                
+                if existing_block != None and len(existing_block) > 0:
+                    # Just update existing entry
+                    for u in existing_block:
+                        u.start_time = start_time
+                        u.end_time = duration
+                        u.applied_by = author
+
+                        blocks_data.append({
+                            "sub": sub_name,
+                            "name": u.user,
+                            "applied_by": author,
+                            "end_date": duration,
+                            "start_date": start_time
+                        })
+                else:
+                    # Create new entry
+                    new_block = BlockedUser(
+                        sub=sub.id, 
+                        user=user, 
+                        applied_by=author, 
+                        start_time=start_time,
+                        end_time=duration
+                    )
+                    blocks_data.append({
+                        "sub": sub_name,
+                        "name": user,
+                        "applied_by": author,
+                        "end_date": duration,
+                        "start_date": start_time
+                    })
+                    new_blocks.append(new_block)
+            
+            if len(new_blocks) > 0:
+                s.add_all(new_blocks)
+    
+    if s.success:
+        if len(blocks_data) == 0:
+            if len(block_errors) > 0:
+                PMResponse.add_response(author, "block_user_error", block_errors, pm)
+            else:
+                PMResponse.add_response(author, "block_user_empty", sub_name, pm)
+        else:
+            PMResponse.add_response(author, "block_user_success", blocks_data, pm)
+        return True
+    else:
+        print_error(s.error)
+        PMResponse.add_response(author, "block_user_fail", sub_name, pm)
         return True
 
 def get_sub_follows(author, sub_name, lines, pm):

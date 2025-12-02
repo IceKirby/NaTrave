@@ -12,7 +12,7 @@ def now():
 
 # Get midnight time of current date
 def today():
-    return now().replace(hour=0, minute=0, second=0, microsecond=0)
+    return to_day_start(now())
 
 # Get midnight time of next date
 def tomorrow():
@@ -24,6 +24,9 @@ def yesterday():
 
 def days_from_today(num):
     return today() + timedelta(days=num)
+
+def to_day_start(date):
+    return date.replace(hour=0, minute=0, second=0, microsecond=0)
 
 # Removes seconds from time format because who needs them?
 def format_time(raw):
@@ -51,6 +54,10 @@ def format_date(raw):
 
     return "{Dia} de {Mes} de {Ano}".format(Dia=day, Mes=month, Ano=parts[0])
 
+# Formats datetime object to '28/02/2021' format
+def format_date_short(dt):
+    return "{Dia}/{Mes}/{Ano}".format(Dia=dt.day, Mes=dt.month, Ano=dt.year)
+
 # Converts date string from '23/07/2022' to date object
 def convert_date(str):
     parts = str.split("/")
@@ -70,7 +77,7 @@ def convert_date(str):
     if day <= 0 or day > 31:
         day = today.day
 
-    return date(year, month, day)
+    return datetime(year, month, day)
 
 # Converts datetime string from '2022-07-19 14:42:11' format to datetime object
 def to_datetime(val):
@@ -78,6 +85,19 @@ def to_datetime(val):
         return val
     if isinstance(val, str):
         return datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
+
+# Converts input from '19/07/2022 14:42' format to datetime object
+def to_datetime_from_input(val):
+    if isinstance(val, datetime):
+        return val
+    if isinstance(val, str):
+        try:
+            return datetime.strptime(val, "%d/%m/%Y %H:%M")
+        except:
+            try:
+                return datetime.strptime(val, "%d/%m/%Y")
+            except:
+                return None
 
 ### String Utils
 class SafeDict(dict):

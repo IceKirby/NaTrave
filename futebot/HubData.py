@@ -112,6 +112,9 @@ class HubData:
             if old_item.score != new_item.score:
                 return True
             
+            if old_item.hub_only != new_item.hub_only:
+                return True
+            
         return False
     
     def get_thread_content(self, s, sub, date):

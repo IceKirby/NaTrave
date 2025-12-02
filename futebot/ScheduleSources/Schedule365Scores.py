@@ -77,14 +77,14 @@ class Schedule365Scores(BaseSchedule):
             match.away_team_alts = get_alt_names(away, match.away_sufix)
             
             if home["score"] != -1:
-                match.home_score = home["score"]
+                match.home_score = int(home["score"])
             if away["score"] != -1:
-                match.away_score = away["score"]
+                match.away_score = int(away["score"])
             
             if "penaltyScore" in home:
-                match.home_penalty = home["penaltyScore"]
+                match.home_penalty = int(home["penaltyScore"])
             if "penaltyScore" in away:
-                match.away_penalty = away["penaltyScore"]
+                match.away_penalty = int(away["penaltyScore"])
             
             match.source = "365Scores"
             id = m["id"]

@@ -9,11 +9,23 @@ request_match_success = "Você requisitou as seguintes partidas:  \n  \n{Matches
 request_match_error = "Não foi possível agendar as partidas para {Name}, tente novamente em instantes."
 request_match_no_match = "Não foi possível encontrar as partidas na data requisitada. Verifique se você especificou a data e os times corretos e se eles estão na ordem Mandante vs Visitante."
 request_match_invalid_format = "Não foi possível agendar partidas para {Name} porque o formato da mensagem não é válido. Confira o formato correto em https://www.reddit.com/r/NaTrave/wiki/requisitar"
+request_match_blocked_user = "Você atualmente está impedido de requisitar partidas para {Name} até {Date}. Caso tenha dúvidas, entre em contato com a moderação de {Name}."
 
-# [COMMAND] ABORT MATCH
+# [COMMAND] RESTART MATCH
+restart_match_success = "Você requisitou o reinício das seguintes partidas:  \n  \n{Matches}"
+restart_match_error = "Não foi possível reiniciar as partidas para {Name}, tente novamente em instantes."
+restart_match_invalid_format = "Não foi possível reiniciar partidas para {Name} porque o formato da mensagem não é válido."
+restart_match_line = "- [{Tour}] {Home} x {Away}"
+
+# [COMMAND] ABORT/CANCEL MATCH
 abort_match_success = "Você requisitou o cancelamento das seguintes partidas:  \n  \n{Matches}"
 abort_match_error = "Não foi possível cancelar as partidas para {Name}, tente novamente em instantes."
 abort_match_invalid_format = "Não foi possível cancelar partidas para {Name} porque o formato da mensagem não é válido."
+
+# [COMMAND] SET MATCH TO HUB ONLY
+set_hubonly_success = "Você configurou as seguintes partidas para rodarem sem tópico próprio:  \n  \n{Matches}"
+set_hubonly_error = "Não foi possível configurar as partidas para {Name}, tente novamente em instantes."
+hubonly_match_invalid_format = "Não foi possível configurar as partidas para {Name} porque o formato da mensagem não é válido."
 
 match_listing = "- [{Tour}] {Home} vs {Away} ({Time}) para {Sub}: {Thread}"
 aborted_match_listing = "- [{Tour}] {Home} vs {Away} ({Time}) para {Sub}: {Thread}"
@@ -57,6 +69,20 @@ get_subs_teams = "**Todas as partidas dos times:** {Teams}"
 get_subs_tours = "**Todas as partidas das competições:** {Tours}"
 get_subs_both = "**Partidas dos times:**  \n  \n{Teams}"
 get_subs_both_li = "- {Team} (Competições: {Tours})"
+
+# [COMMAND] BLOCK USER
+block_user_success = "Os seguintes usuários estão impedidos de requisitar partidas para {Name}:  \n  \n{Blocked}"
+block_user_error = "Não foi possível bloquear os seguintes usuários:  \n  \n{Blocked}"
+block_user_empty = "Não há usuários impedidos de requisitar partidas para {Name}."
+block_user_fail = "Não foi possível bloquear os usuários requisitados, tente novamente mais tarde."
+blocked_user_line = "- {Name} até {Date} (aplicado por {User} em {Start})  "
+
+# [COMMAND] VIEW REQUESTS
+view_requests_empty  = "Não há partidas requisitas para {Name}."
+view_requests_success = "Partidas requisitadas para {Name}:  \n  \nData | Usuário |  Partida | Com Tópico?  \n--- | --- | --- | ---  \n{Matches}"
+view_requests_error = "Não foi possível ver a lista de partidas requisitadas, tente novamente mais tarde."
+
+view_request_line = "{Date} | {User} | {Home} x {Away} ({Tour}) | {HubOnly}"
 
 # [COMMAND] CONFIG
 config_sub_success = "As seguintes configurações do subreddit {Name} foram modificadas com sucesso:  \n  \n{Config}"
