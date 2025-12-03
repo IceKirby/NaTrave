@@ -1,11 +1,14 @@
 import re
 import hashlib
 import requests
+import os
 import NameTranslator
 from ScheduleSources.GEQueryFormat import query_format
 from ScheduleSources.ScheduleMatch import ScheduleMatch, ScheduleState
 from ScheduleSources.BaseSchedule import BaseSchedule
 from BotUtils import normalize_name
+
+GE_HASH = os.environ.get('GE_HASH')
 
 class ScheduleGE(BaseSchedule):
     
@@ -20,14 +23,7 @@ class ScheduleGE(BaseSchedule):
         return self.cached_schedules[day]
     
     def get_raw_schedule(self, day):
-        # query = query_format.encode('utf-8');
-        # 
-        # m = hashlib.sha256()
-        # m.update(query)
-        # hashed = m.hexdigest()
-        hashed = "c1b3f92ec73ae582e54ed74125a92b9fa8310083ca25d37fa89801d8833e8e8c"
-        
-        req_url = 'https://geql.globo.com/graphql?variables={"date":"'+day+'"}&extensions={"persistedQuery":{"version":1,"sha256Hash":"'+hashed+'"}}'
+        req_url = 'https://geql.globo.com/graphql?variables={"date":"'+day+'"}&extensions={"persistedQuery":{"version":1,"sha256Hash":"'+GE_HASH+'"}}'
         
         response = requests.get(req_url)
         return response.json()

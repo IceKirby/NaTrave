@@ -2,11 +2,14 @@ from CommandData import command_data
 import Redditor
 import PMResponse
 import re
+import os
 from ErrorPrinter import print_error
 from DB import db_session
 from Models import Sub
-from BotUtils import strip_command_name, format_sub_name
+from BotUtils import strip_command_name, format_sub_name, format_user_name
 from prawcore import PrawcoreException
+
+BOT_ADMIN = os.environ.get('BOT_ADMIN').lower()
 
 def try_command(pm):
     # Cancel PM and marks as read without executing anything if no author data
@@ -42,7 +45,7 @@ def try_command(pm):
     # Checks if PM sender is a mod of target subreddit (for some commands)
     if mod_only_command(command) or mod_only_request(command, sub):
         try:
-            if not Redditor.is_mod_from_sub(author, sub):
+            if not Redditor.is_mod_from_sub(author, sub) and not is_bot_admin(author):
                 PMResponse.add_response(author, "mod_only_command", format_sub_name(sub), pm)
                 return True
         except Exception as e:
@@ -148,3 +151,6 @@ def registered_only_command(comm):
 
 def allow_even_locked(comm):
     return command_data[comm]["options"]["allow_locked"]
+
+def is_bot_admin(author):
+    return format_user_name(author).lower() == BOT_ADMIN

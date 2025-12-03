@@ -381,9 +381,11 @@ def schedule_follows():
                 res = scheduleGE.find_followed_match(today, follow.team, follow.tour)
                 
                 if res == None or len(res) == 0:
-                    res = schedule365.find_followed_match(today, follow.team, follow.tour)
-                    if res == None or len(res) == 0:
-                        continue
+                    continue
+                # if res == None or len(res) == 0:
+                #     res = schedule365.find_followed_match(today, follow.team, follow.tour)
+                #     if res == None or len(res) == 0:
+                #         continue
                     
                 if len(res) > 0:
                     for sch in res:
