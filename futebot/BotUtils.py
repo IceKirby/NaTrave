@@ -113,8 +113,12 @@ def strip_accents(s):
    return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn').strip()
 
 # Strips accents and returns lower case
-def normalize_name(name):
-    return strip_accents(name).lower()
+def normalize_name(name, remove_spaces=False):
+    if remove_spaces:
+        norm = strip_accents(name).lower()
+        return re.sub(r"[ \t\n\r\.,-]+", "", norm)
+    else:
+        return strip_accents(name).lower()
 
 # Converts "1" string to "001"
 def zero_pad(val, digits):

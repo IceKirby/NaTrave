@@ -3,9 +3,7 @@ import NameTranslator
 from ScheduleSources.ScheduleMatch import ScheduleMatch
 from BotUtils import normalize_name
 from ErrorPrinter import print_error
-
-from thefuzz import fuzz
-from thefuzz import process
+from rapidfuzz import fuzz
 
 class BaseSchedule:
     def __init__(self):
@@ -96,15 +94,15 @@ class BaseSchedule:
         if team == "" and tour == "":
             return None
         
-        team = normalize_name(team)
-        tour = normalize_name(tour)
+        team = NameTranslator.get_standard_team_name(team)
+        tour = NameTranslator.get_standard_tour_name(tour)
         
         res = []
         
         for s in schedule:
-            s_home = normalize_name(s.home_team)
-            s_away = normalize_name(s.away_team)
-            s_tour = normalize_name(s.tour)
+            s_home = NameTranslator.get_standard_team_name(s.home_team)
+            s_away = NameTranslator.get_standard_team_name(s.away_team)
+            s_tour = NameTranslator.get_standard_tour_name(s.tour)
             
             if team == "":
                 if tour == s_tour:
@@ -121,15 +119,10 @@ class BaseSchedule:
         pass
 
     def compare_with_alts(self, name, alts):
+        name_norm = normalize_name(name, True)
         highest = 0
         for n in alts:
-            f = fuzz.ratio(name, normalize_name(n))
+            f = fuzz.ratio(name_norm, n)
             if f > highest:
                 highest = f
         return highest
-    
-    def get_fixed_tour_name(self, tour_name):
-        alt_names = NameTranslator.get_alt_tour_names(tour_name)
-        if len(alt_names) == 0:
-            return tour_name
-        return alt_names[0]

@@ -48,7 +48,7 @@ class Schedule365Scores(BaseSchedule):
             
             match.date = start_time.strftime("%Y-%m-%d")
             match.time = start_time.strftime("%H:%M:00")
-            match.tour = self.get_fixed_tour_name(m["competitionDisplayName"])
+            match.tour = m["competitionDisplayName"]
             match.is_aborted = m["statusText"] in ["Adiado", "Cancelado", "Abortado"]
             
             if m["statusGroup"] == 2:

@@ -2,6 +2,7 @@ import re
 import enum
 import PMResponse
 import Redditor
+import NameTranslator
 from ErrorPrinter import print_error
 from psycopg2.errors import UniqueViolation
 from sqlalchemy import and_, func
@@ -74,9 +75,11 @@ def subscribe_sub(author, sub_name, lines, pm):
         existing = s.query(Follow).filter_by(sub=sub.id).all()
         
         for to in groups["tour"]:
+            std_tour = NameTranslator.get_standard_tour_name(to)
             for te in groups["team"]:
-                if not has_existing_follow(existing, to, te):
-                    new_follows.append(Follow(sub=sub.id, team=te, tour=to))
+                std_team = NameTranslator.get_standard_team_name(te)
+                if not has_existing_follow(existing, std_tour, std_team):
+                    new_follows.append(Follow(sub=sub.id, team=std_team, tour=std_tour))
         
         if len(new_follows) > 0:
             s.add_all(new_follows)
@@ -319,7 +322,6 @@ def config_sub(author, sub_name, lines, pm):
         PMResponse.add_response(author, "config_sub_fail", sub_name, pm)
         return True
     
-
 def get_sub_values(sub):
     res = []
     for key,value in config_options.items():

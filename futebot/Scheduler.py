@@ -16,6 +16,7 @@ from FormattingData.PostTemplate import match_no_info
 from ScheduleSources.ScheduleGE import ScheduleGE
 from ScheduleSources.Schedule365Scores import Schedule365Scores
 from ScheduleSources.ScheduleMatch import ScheduleState
+import NameTranslator
 
 scheduleGE = ScheduleGE()
 schedule365 = Schedule365Scores()
@@ -26,7 +27,7 @@ def clear_cached():
 
 def request_match(author, sub_name, lines, pm, silent=False, with_thread=True):
     # Parse the PM
-    requested_date, matches = parse_match_request(lines)
+    requested_date, matches = parse_match_request(lines, False)
 
     # Check if a valid result was found
     if matches == None:
@@ -379,19 +380,18 @@ def schedule_follows():
             found_matches = []
             for follow,sub in follows:
                 res = scheduleGE.find_followed_match(today, follow.team, follow.tour)
-                
                 if res == None or len(res) == 0:
-                    continue
-                # if res == None or len(res) == 0:
-                #     res = schedule365.find_followed_match(today, follow.team, follow.tour)
-                #     if res == None or len(res) == 0:
-                #         continue
+                    res = schedule365.find_followed_match(today, follow.team, follow.tour)
+                    if res == None or len(res) == 0:
+                        continue
                     
                 if len(res) > 0:
                     for sch in res:
                         # Ignore if no date or time found
                         if not sch.date or not sch.time:
                             continue
+
+                        standardize_match_names(sch)
                         
                         # Get Match's kick-off time
                         start_time = datetime.strptime(sch.date + " " + sch.time, "%Y-%m-%d %H:%M:%S")
@@ -447,10 +447,12 @@ def find_match(day, home_team, away_team):
     
     res = scheduleGE.find_match(today, home_team, away_team)
     if res:
+        standardize_match_names(res)
         return res
     
     res = schedule365.find_match(today, home_team, away_team)
     if res:
+        standardize_match_names(res)
         return res
     
     return None
@@ -653,6 +655,7 @@ def fill_match_links(match, day):
     if match.ge_url == None:
         res = scheduleGE.find_match(day, match.home_team, match.away_team)
         if res:
+            standardize_match_names(res)
             if res.url:
                 match.ge_url = res.url
             is_youth_match = res.is_youth_match
@@ -662,8 +665,10 @@ def fill_match_links(match, day):
     if match.s365_url == None:
         # res = schedule365.find_match(day, match.home_team, match.away_team)
         res = schedule365.find_match(day, match.home_team, match.away_team, is_youth_match, is_women_match)
-        if res and res.url:
-            match.s365_url = res.url
+        if res:
+            standardize_match_names(res)
+            if res.url:
+                match.s365_url = res.url
 
 # Marks Match and Thread as finished and creates Post-Match thread
 def skip_to_post_match(s, schedule, match, thread, sub):
@@ -723,7 +728,7 @@ def get_match_list_response(matches, threads, sub_name):
     
     return result
 
-def parse_match_request(lines):
+def parse_match_request(lines, standard_names=True):
     matches, date = [], None
     date_re = r"[0-9]{1,2}\/[0-9]{1,2}(\/[0-9]{2,4})?"
     match_re = r"(.+)\s(vs|x)\s(.+)"
@@ -736,8 +741,8 @@ def parse_match_request(lines):
         has_match = re.search(match_re, line, re.IGNORECASE)
         if has_match:
             matches.append({
-                "home": has_match.group(1),
-                "away": has_match.group(3)
+                "home": has_match.group(1) if not standard_names else NameTranslator.get_standard_team_name(has_match.group(1)),
+                "away": has_match.group(3) if not standard_names else NameTranslator.get_standard_team_name(has_match.group(3))
             })
 
     if len(matches) > 0:
@@ -746,3 +751,9 @@ def parse_match_request(lines):
         date = BotUtils.convert_date(date)
         return date, matches
     return None, None
+
+def standardize_match_names(match):
+    match.home_team = NameTranslator.get_standard_team_name(match.home_team)
+    match.away_team = NameTranslator.get_standard_team_name(match.away_team)
+    match.tour = NameTranslator.get_standard_tour_name(match.tour)
+    return match

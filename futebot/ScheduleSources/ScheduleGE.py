@@ -49,7 +49,7 @@ class ScheduleGE(BaseSchedule):
                 match = ScheduleMatch()
                 match.date = m["startDate"]
                 match.time = m["startHour"]
-                match.tour = self.get_fixed_tour_name(tour_name)
+                match.tour = tour_name
                 
                 
                 if obj in tour["future"]:
