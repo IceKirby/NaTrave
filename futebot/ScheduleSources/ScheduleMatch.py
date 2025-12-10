@@ -1,4 +1,5 @@
 import enum
+import NameTranslator
 from BotUtils import format_str, format_time, format_date
 
 class ScheduleState(enum.Enum):
@@ -88,6 +89,11 @@ class ScheduleMatch:
             Horario = format_time(self.time),
             MatchThreadUrl = "" if not match_url else "**Match  Thread:** " + match_url
         )
+    
+    def to_standard_names(self):
+        self.home_team = NameTranslator.get_standard_team_name(self.home_team)
+        self.away_team = NameTranslator.get_standard_team_name(self.away_team)
+        self.tour = NameTranslator.get_standard_tour_name(self.tour)
     
     def __repr__(self):
         return "<ScheduleMatch ([{}] {} x {} ({}, {})) [Women: {}, Youth: {}]- URL: {}>"\

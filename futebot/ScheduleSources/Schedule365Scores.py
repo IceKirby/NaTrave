@@ -37,6 +37,7 @@ class Schedule365Scores(BaseSchedule):
         return sch
 
     def format_schedule(self, data):
+        base_data = data
         data = data["games"]
         result = []
         
@@ -48,7 +49,7 @@ class Schedule365Scores(BaseSchedule):
             
             match.date = start_time.strftime("%Y-%m-%d")
             match.time = start_time.strftime("%H:%M:00")
-            match.tour = m["competitionDisplayName"]
+            match.tour = find_tour_name(base_data, m)
             match.is_aborted = m["statusText"] in ["Adiado", "Cancelado", "Abortado"]
             
             if m["statusGroup"] == 2:
@@ -64,18 +65,15 @@ class Schedule365Scores(BaseSchedule):
             home = m["homeCompetitor"]
             away = m["awayCompetitor"]
             
-            match.home_team = home["name"]
-            match.away_team = away["name"]
+            match.home_team = remove_name_sufix(home["name"])
+            match.away_team = remove_name_sufix(away["name"])
             
-            match.is_youth_match = is_youth_team(match.home_team) or is_youth_team(match.away_team)
-            match.is_women_match = is_women_team(match.home_team) or is_women_team(match.away_team)
+            match.is_youth_match = is_youth_team(home["name"]) or is_youth_team(away["name"])
+            match.is_women_match = is_women_team(home["name"]) or is_women_team(away["name"])
             
-            match.home_sufix = get_name_sufix(match.home_team)
-            match.away_sufix = get_name_sufix(match.away_team)
-            
-            match.home_team_alts = get_alt_names(home, match.home_sufix)
-            match.away_team_alts = get_alt_names(away, match.away_sufix)
-            
+            match.home_team_alts = get_alt_names(home)
+            match.away_team_alts = get_alt_names(away)
+
             if home["score"] != -1:
                 match.home_score = int(home["score"])
             if away["score"] != -1:
@@ -89,11 +87,20 @@ class Schedule365Scores(BaseSchedule):
             match.source = "365Scores"
             id = m["id"]
             match.url = f"https://webws.365scores.com/web/game/?gameId={id}&langId=31&userCountryId=21"
-            
+            match.to_standard_names()
+
             result.append(match)
         
         return result
     
+def find_tour_name(data, match):
+    id = match["competitionId"]
+    comps = data["competitions"]
+    for c in comps:
+        if c["id"] == id:
+            return c["name"]
+    return match["competitionDisplayName"]
+
 def is_women_team(name):
     name = normalize_name(name)
     if re.search(r"\s\((w|f)\)$", name):
@@ -111,22 +118,18 @@ def is_youth_team(name):
     
     return False
             
-def get_alt_names(data, name_sufix):
+def get_alt_names(data):
     result = []
     
     if "name" in data:
-        result.append(data["name"])
+        result.append(remove_name_sufix(data["name"]))
     if "shortName" in data:
-        result.append(data["shortName"])
+        result.append(remove_name_sufix(data["shortName"]))
     if "longName" in data:
-        result.append(data["longName"])
+        result.append(remove_name_sufix(data["longName"]))
     
     # Get alternative names, adding sufix if necessary
-    if name_sufix == "":
-        alt_names = NameTranslator.get_alt_club_names(data["name"])
-    else:
-        alt_names = NameTranslator.get_alt_club_names(remove_name_sufix(data["name"]))
-        alt_names = list(map(lambda x: x + name_sufix, alt_names))
+    alt_names = NameTranslator.get_alt_club_names(normalize_name(remove_name_sufix(data["name"]), True))
     
     result = list(set(result + alt_names))
     

@@ -68,6 +68,8 @@ def subscribe_sub(author, sub_name, lines, pm):
         return True
     
     subs_data = { "sub": sub_name, "team": groups["team"], "tour": groups["tour"] }
+    res = { "sub": sub_name, "team": [], "tour": [] }
+    
     with db_session() as s:
         new_follows = []
         sub = s.query(Sub).filter(Sub.sub_name.ilike(sub_name)).first()
@@ -80,14 +82,24 @@ def subscribe_sub(author, sub_name, lines, pm):
                 std_team = NameTranslator.get_standard_team_name(te)
                 if not has_existing_follow(existing, std_tour, std_team):
                     new_follows.append(Follow(sub=sub.id, team=std_team, tour=std_tour))
+
+                    if std_tour != "":
+                        res["tour"].append(std_tour)
+                    if std_team != "":
+                        res["team"].append(std_team)
         
         if len(new_follows) > 0:
             s.add_all(new_follows)
             global has_new_follows
             has_new_follows = True
+
+            if len(res["tour"]) == 0:
+                res["tour"].append("")
+            if len(res["team"]) == 0:
+                res["team"].append("")
     
     if s.success:
-        PMResponse.add_response(author, "subscribe_success", subs_data, pm)
+        PMResponse.add_response(author, "subscribe_success", res, pm)
         return True
     else:
         print_error(s.error)

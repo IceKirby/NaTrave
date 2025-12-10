@@ -1,5 +1,4 @@
 import re
-import hashlib
 import requests
 import os
 import NameTranslator
@@ -51,7 +50,6 @@ class ScheduleGE(BaseSchedule):
                 match.time = m["startHour"]
                 match.tour = tour_name
                 
-                
                 if obj in tour["future"]:
                     match.state = ScheduleState.upcoming
                 elif obj in tour["now"]:
@@ -82,6 +80,7 @@ class ScheduleGE(BaseSchedule):
                     match.url = m["transmission"]["url"]
                 
                 match.source = "GE"
+                match.to_standard_names()
                 
                 result.append(match)
         

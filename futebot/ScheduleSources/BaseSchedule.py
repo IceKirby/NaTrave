@@ -1,6 +1,3 @@
-import requests
-import NameTranslator
-from ScheduleSources.ScheduleMatch import ScheduleMatch
 from BotUtils import normalize_name
 from ErrorPrinter import print_error
 from rapidfuzz import fuzz
@@ -55,15 +52,9 @@ class BaseSchedule:
             if is_women and not s.is_women_match:
                 continue
             
-            # Add sufix if it's a Youth/Women match
-            home_sufix, away_sufix = "", ""
-            if is_youth or is_women:
-                home_sufix = " " + normalize_name(s.home_sufix)
-                away_sufix = " " + normalize_name(s.away_sufix)
-            
             # Check how close the input names are to match's names
-            home_ratio = self.compare_with_alts(home_team + home_sufix, s.home_team_alts)
-            away_ratio = self.compare_with_alts(away_team + away_sufix, s.away_team_alts)
+            home_ratio = self.compare_with_alts(home_team, s.home_team_alts)
+            away_ratio = self.compare_with_alts(away_team, s.away_team_alts)
             sum = home_ratio + away_ratio
             
             # If perfect match is found, just return it immediately
@@ -94,15 +85,15 @@ class BaseSchedule:
         if team == "" and tour == "":
             return None
         
-        team = NameTranslator.get_standard_team_name(team)
-        tour = NameTranslator.get_standard_tour_name(tour)
+        team = normalize_name(team)
+        tour = normalize_name(tour)
         
         res = []
         
         for s in schedule:
-            s_home = NameTranslator.get_standard_team_name(s.home_team)
-            s_away = NameTranslator.get_standard_team_name(s.away_team)
-            s_tour = NameTranslator.get_standard_tour_name(s.tour)
+            s_home = normalize_name(s.home_team)
+            s_away = normalize_name(s.away_team)
+            s_tour = normalize_name(s.tour)
             
             if team == "":
                 if tour == s_tour:
@@ -119,10 +110,9 @@ class BaseSchedule:
         pass
 
     def compare_with_alts(self, name, alts):
-        name_norm = normalize_name(name, True)
         highest = 0
         for n in alts:
-            f = fuzz.ratio(name_norm, n)
+            f = fuzz.ratio(name, n)
             if f > highest:
                 highest = f
         return highest

@@ -27,7 +27,7 @@ def clear_cached():
 
 def request_match(author, sub_name, lines, pm, silent=False, with_thread=True):
     # Parse the PM
-    requested_date, matches = parse_match_request(lines, False)
+    requested_date, matches = parse_match_request(lines)
 
     # Check if a valid result was found
     if matches == None:
@@ -390,8 +390,6 @@ def schedule_follows():
                         # Ignore if no date or time found
                         if not sch.date or not sch.time:
                             continue
-
-                        standardize_match_names(sch)
                         
                         # Get Match's kick-off time
                         start_time = datetime.strptime(sch.date + " " + sch.time, "%Y-%m-%d %H:%M:%S")
@@ -447,12 +445,10 @@ def find_match(day, home_team, away_team):
     
     res = scheduleGE.find_match(today, home_team, away_team)
     if res:
-        standardize_match_names(res)
         return res
     
     res = schedule365.find_match(today, home_team, away_team)
     if res:
-        standardize_match_names(res)
         return res
     
     return None
@@ -655,7 +651,6 @@ def fill_match_links(match, day):
     if match.ge_url == None:
         res = scheduleGE.find_match(day, match.home_team, match.away_team)
         if res:
-            standardize_match_names(res)
             if res.url:
                 match.ge_url = res.url
             is_youth_match = res.is_youth_match
@@ -666,7 +661,6 @@ def fill_match_links(match, day):
         # res = schedule365.find_match(day, match.home_team, match.away_team)
         res = schedule365.find_match(day, match.home_team, match.away_team, is_youth_match, is_women_match)
         if res:
-            standardize_match_names(res)
             if res.url:
                 match.s365_url = res.url
 
@@ -751,9 +745,3 @@ def parse_match_request(lines, standard_names=True):
         date = BotUtils.convert_date(date)
         return date, matches
     return None, None
-
-def standardize_match_names(match):
-    match.home_team = NameTranslator.get_standard_team_name(match.home_team)
-    match.away_team = NameTranslator.get_standard_team_name(match.away_team)
-    match.tour = NameTranslator.get_standard_tour_name(match.tour)
-    return match
