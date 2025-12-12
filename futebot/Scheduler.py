@@ -83,6 +83,9 @@ def request_match(author, sub_name, lines, pm, silent=False, with_thread=True):
             # Check if Request is already in DB
             request = SchedulerHelpers.find_or_create_db_request(s, thread, author, silent, with_thread)
             all_requests.append(request)
+
+            if match.start_time != start_time:
+                fix_start_time(s, match, start_time)
         
         # Formats list of matches for PM response
         requested_data = get_match_list_response(all_matches, all_threads, sub_name)
@@ -399,7 +402,11 @@ def schedule_follows():
                         
                         # Create/Get Thread entry from DB
                         thread = SchedulerHelpers.find_or_create_db_thread(s, match, sub, start_time, True)
+
+                        if start_time != match.start_time:
+                            fix_start_time(s, match, start_time)
                     
+
                     follow.last_used = today
                     
         except Exception as e:
@@ -663,6 +670,23 @@ def fill_match_links(match, day):
         if res:
             if res.url:
                 match.s365_url = res.url
+
+def fix_start_time(s, match, new_time):
+    match.start_time = new_time
+
+    threads = s.query(Thread, Sub)\
+        .join(Sub)\
+        .filter(Thread.match_id == match.id)\
+        .all()
+    
+    now = BotUtils.now()
+    for t, s in threads:
+        t.creation_time = new_time - timedelta(minutes=s.pre_match_time)
+
+        if now < t.creation_time and t.url != None:
+            Redditor.delete_thread(t.url)
+            t.url = None
+
 
 # Marks Match and Thread as finished and creates Post-Match thread
 def skip_to_post_match(s, schedule, match, thread, sub):

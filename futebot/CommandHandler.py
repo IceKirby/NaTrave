@@ -51,6 +51,11 @@ def try_command(pm):
         except Exception as e:
             return False
     
+    # Check if a command is Admin-only
+    if admin_only_command(command) and not is_bot_admin(author):
+        PMResponse.add_response(author, "admin_only_command", format_sub_name(sub), pm)
+        return True
+    
     # Checks if subreddit is registered with bot (for some commands)
     if registered_only_command(command): 
         try:
@@ -68,6 +73,8 @@ def try_command(pm):
                 return True
         except Exception as e:
             return False
+        
+    
         
     # Get function for specified command
     action = command_data[command]["action"]
@@ -145,6 +152,11 @@ def mod_only_request(comm, name):
 
 def mod_only_command(comm):
     return command_data[comm]["options"]["mod_only"]
+
+def admin_only_command(comm):
+    if not "admin" in command_data[comm]["options"]:
+        return False
+    return command_data[comm]["options"]["admin_only"]
 
 def registered_only_command(comm):
     return command_data[comm]["options"]["registered_sub"]

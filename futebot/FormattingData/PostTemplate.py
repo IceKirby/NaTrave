@@ -36,6 +36,10 @@ Escalações{EscalacaoTemporaria}:
   
 # Lances  
 {Lances}  
+  
+---  
+  
+Gosta do NaTrave? [Seja um apoiador no Catarse!](https://www.catarse.me/natrave)
 """
 
 aggregated_score_template = """ (Agregado: {CasaAgregado} x {ForaAgregado})"""
@@ -97,9 +101,12 @@ Estatísticas
 ### Vídeos  
   
 {Videos}
-
----  
+  
 {MatchThreadUrl}  
+  
+---  
+  
+Gosta do NaTrave? [Seja um apoiador no Catarse!](https://www.catarse.me/natrave)
 """
 
 # ################################################ #
@@ -116,6 +123,19 @@ simple_post_match_template = """
 """
 
 # ###################################### #
+# Comment Template for Half-Time Stats
+# ###################################### #
+half_time_stats_template = """
+### {Periodo}  
+  
+{Estatisticas}  
+  
+---  
+  
+Gosta do NaTrave? [Seja um apoiador no Catarse!](https://www.catarse.me/natrave)
+"""
+
+# ###################################### #
 # Thread Template for HUB threads
 # ###################################### #
 hub_template = """
@@ -125,11 +145,12 @@ Partidas de hoje que terão Match Threads em r/{Sub}:
   
 &nbsp;  
 
-{HubAnterior}
+{HubAnterior}  
+Quer requisitar uma partida? Leia como aqui: {InstructionsLink}
   
 ---  
   
-Quer requisitar uma partida? Leia como aqui: {InstructionsLink}
+Gosta do NaTrave? [Seja um apoiador no Catarse!](https://www.catarse.me/natrave)
   
 """
 

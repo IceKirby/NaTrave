@@ -1,6 +1,6 @@
 import math
 from ErrorPrinter import print_error
-from FormattingData.PostTemplate import match_template, post_match_template, post_title_template, aggregated_score_template, match_icons
+from FormattingData.PostTemplate import match_template, post_match_template, post_title_template, aggregated_score_template, match_icons, half_time_stats_template
 from BotUtils import format_str, zero_pad, format_time, format_date
 
 from MatchSources.SourceGE import SourceGE
@@ -227,6 +227,10 @@ class Match:
             stats = source.stats.print_as_table()
             if stats:
                 self.last_stats = self.get_match_period()
+                stats = format_str(half_time_stats_template,
+                    Periodo=self.get_interval_desc(self.get_match_period()),
+                    Estatisticas=stats
+                )
             return stats
         except Exception as e:
             print_error(e)
@@ -343,6 +347,17 @@ class Match:
         elif period == MatchPeriod.extra_second_half:
             return "2º Tempo/Prorrogação"
     
+    def get_interval_desc(self, period):
+        if period == MatchPeriod.interval:
+            return "Intervalo"
+        elif period == MatchPeriod.preparing_extra_time:
+            return "Fim do Segundo Tempo"
+        elif period == MatchPeriod.extra_interval:
+            return "Intervalo da Prorrogação"
+        elif period == MatchPeriod.preparing_penalties:
+            return "Fim da Prorrogação"
+        return "Intervalo"
+
     def get_play_icon(self, type):
         if type == PlayType.goal or type == PlayType.own_goal:
             return match_icons["goal"] + " "

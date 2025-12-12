@@ -15,10 +15,26 @@ def find_or_create_db_match(s, req, start_time):
 
 def find_db_match(s, req, start_time):
     return s.query(Match).filter(
-        Match.home_team == req.home_team,
-        Match.away_team == req.away_team,
-        Match.tournament == req.tour,
-        Match.start_time == start_time
+        or_(
+            and_(
+                Match.home_team == req.home_team,
+                Match.away_team == req.away_team,
+                Match.tournament == req.tour,
+                Match.start_time == start_time
+            ),
+            and_(
+                Match.home_team == req.home_team,
+                Match.away_team == req.away_team,
+                Match.tournament == req.tour,
+                Match.ge_url == req.url
+            ),
+            and_(
+                Match.home_team == req.home_team,
+                Match.away_team == req.away_team,
+                Match.tournament == req.tour,
+                Match.s365_url == req.url
+            )
+        )
     ).first()
 
 def create_db_match(s, req, start_time):

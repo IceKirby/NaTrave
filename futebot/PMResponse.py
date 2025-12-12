@@ -53,6 +53,8 @@ def format_response_data(user, resp):
         result.append(PMResponseText.no_such_sub.format(Name=to_sub(resp.data["no_such_sub"])))
     if "mod_only_command" in resp.data:
         result.append(PMResponseText.mod_only_command.format(Name=to_sub(resp.data["mod_only_command"])))
+    if "admin_only_command" in resp.data:
+        result.append(PMResponseText.admin_only_command)
     if "registered_only_command" in resp.data:
         result.append(PMResponseText.registered_only_command.format(Name=to_sub(resp.data["registered_only_command"])))
         
@@ -237,6 +239,12 @@ def format_response_data(user, resp):
     if "sub_unlocked_error" in resp.data:
         result.append(PMResponseText.sub_unlocked_error.format(
             Name=to_sub(resp.data["sub_unlocked_error"]),
+        ))
+    
+    # Admin
+    if "admin_command_result" in resp.data:
+        result.append(PMResponseText.admin_command_result.format(
+            Result="  \n".join(resp.data["admin_command_result"]),
         ))
     
     if len(result) == 0:

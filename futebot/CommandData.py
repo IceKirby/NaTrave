@@ -1,6 +1,7 @@
 import SubManager
 import Scheduler
 import Redditor
+import AdminTools
 
 command_data = {
     "registrar": {
@@ -173,5 +174,16 @@ command_data = {
             "mod_only_by_options": True
         },
         "alts": ["partidasemtopico", "jogosemtopico", "matchsemtopico", "partidasemmt", "jogosemmt", "matchsemmt"]
+    },
+    "dbfix": {
+        "action": AdminTools.update_follow_names,
+        "options": {
+            "registered_sub": True,
+            "allow_locked": True,
+            "admin_only": True,
+            "mod_only": False,
+            "mod_only_by_options": False
+        },
+        "alts": []
     }
 }

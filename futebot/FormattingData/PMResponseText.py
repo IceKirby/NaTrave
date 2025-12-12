@@ -3,6 +3,7 @@ no_sub_specified = "Seu comando não foi reconhecido porque você não especific
 no_such_sub = "Não foi possível processar seu comando porque ele contém um ou mais subreddits inválidos: {Name}"
 mod_only_command = "Não foi possível processar seu comando porque você não é um moderador dos seguintes subreddits: {Name}."
 registered_only_command = "Não foi possível processar seu comando porque os seguintes subreddits não estão registrados com o bot: {Name}. Para registrar um subreddit, leia as instruções em https://www.reddit.com/r/NaTrave/wiki/registrar"
+admin_only_command = "Este comando é de uso exclusivo do administrador do bot."
 
 # [COMMAND] REQUEST MATCH
 request_match_success = "Você requisitou as seguintes partidas:  \n  \n{Matches}"
@@ -95,3 +96,6 @@ config_sub_list = "As configurações atuais do subreddit {Name} são:  \n  \n{C
 sub_locked_message = "[Esta é uma mensagem automática do bot {Bot}]  \n  \nO bot {Bot} falhou múltiplas vezes em acessar o subreddit {Name}. Isso provavelmente aconteceu porque o sub está configurado como privado ou restrito, ou o bot foi banido do sub. Como medida de precaução, o bot irá interromper as operações no sub {Name} até que o problema seja solucionado.  \n  \nPara re-estabelecer o funcionamento do bot, certifique-se que o bot possa acessar e postar normalmente no sub, e então envie uma mensagem privada para {Bot} com o título 'Destravar', incluindo também o nome do sub no corpo da mensagem.  \n  \nCaso não queira mais que o bot opere no sub, envie uma mensagem com o título 'Desregistrar', com o nome do sub no corpo da mensagem."
 sub_unlocked = "O subreddit {Name} foi destravado com sucesso."
 sub_unlocked_error = "Não foi possível destravar o subreddit {Name}. Tente novamente mais tarde."
+
+# ADMIN STUFF
+admin_command_result = "{Result}"
