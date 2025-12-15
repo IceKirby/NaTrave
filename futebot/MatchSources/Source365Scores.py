@@ -595,7 +595,6 @@ class Source365Scores(MatchSource):
         #given a team 365score id (mineiro is 1209, ream madrid is 131 etc), returns a list of strings with the following format
         #(opponent_name{str} Casa|Fora{str})
         #containing the next {max_results} games for that team
-        err = False;
         fixtures = []
         if isinstance(team_id, int): #valid teamid
             target_url = f"https://webws.365scores.com/web/games/fixtures/?appTypeId=5&langId=31&userCountryId=131&competitors={team_id}"
