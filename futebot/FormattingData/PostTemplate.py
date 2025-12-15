@@ -105,6 +105,13 @@ Estatísticas
 {MatchThreadUrl}  
   
 ---  
+### Próximos Jogos  
+  
+{TimeCasa}: {Fixtures_home}
+
+{TimeFora}: {Fixtures_away}
+  
+---  
   
 Gosta do NaTrave? [Seja um apoiador no Catarse!](https://www.catarse.me/natrave)
 """

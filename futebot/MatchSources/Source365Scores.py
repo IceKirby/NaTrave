@@ -121,6 +121,11 @@ class Source365Scores(MatchSource):
             away_id = self.get_path_value(game, "awayCompetitor.id", None)
             self.set_statistics(home_id, away_id, self.get_path_value(stats, "statistics", []))
         self.filled_data["stats"] = self.stats.count()
+
+        # Fixtures (a.k.a. next games)
+        if stats:
+            self.filled_data["fixtures_home"] = ", ".join(self.get_team_fixtures(game, home_id))
+            self.filled_data["fixtures_away"] = ", ".join( self.get_team_fixtures(game, away_id))           
         
         self.was_updated = True
         
@@ -585,3 +590,25 @@ class Source365Scores(MatchSource):
             return self.unknown_players[id]
         else:
             return super().player_name(id)
+
+    def get_team_fixtures(self, current_game, team_id, max_results=3):
+        #given a team 365score id (mineiro is 1209, ream madrid is 131 etc), returns a list of strings with the following format
+        #(opponent_name{str} Casa|Fora{str})
+        #containing the next {max_results} games for that team
+        if not isinstance(team_id, int):
+            return ("err","invalid team_id on get_team_fixtures")
+        target_url = f"https://webws.365scores.com/web/games/fixtures/?appTypeId=5&langId=31&userCountryId=131&competitors={team_id}"
+        response = requests.get(target_url)
+        res_json = response.json()
+        fixtures = []
+        for game in res_json['games']:
+            if game['id'] == current_game['id']: #means current tracked match still appears as fixture
+                continue
+            if (game['homeCompetitor']['id'] == team_id):
+                fixtures.append((game['awayCompetitor']["name"]+" (Casa)"))
+            else:
+                fixtures.append((game['homeCompetitor']["name"]+" (Fora)"))
+            
+            if(len(fixtures) >= max_results):
+                break
+        return fixtures

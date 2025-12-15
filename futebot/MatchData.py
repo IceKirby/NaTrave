@@ -55,6 +55,7 @@ class Match:
     def update_sources(self):
         self.sources = []
         for url in self.urls:
+            #print(url) this is prime time to capture/log that url
             source = None
             # Check URL origin
             if "ge.globo.com" in url:
@@ -150,7 +151,7 @@ class Match:
         period = self.get_match_period()
         match_time = self.choose_value("match_time", "state.time", "0")
         stats_source = self.choose_source("stats")
-
+        home_fixtures,away_fixtures = self.get_fixtures()
 
         home_aggregated = self.choose_value("aggregated_score", "state.home_aggregated", None)
         away_aggregated = self.choose_value("aggregated_score", "state.away_aggregated", None)
@@ -197,6 +198,9 @@ class Match:
             PostMatchThread = "" if not "post_match_ref" in extra else extra["post_match_ref"],
             MatchThreadUrl = "" if not "match_ref" in extra else extra["match_ref"],
             LinkGE = "" if not "source_link" in extra else extra["source_link"],
+            Fixtures_home = home_fixtures,
+            Fixtures_away = away_fixtures,
+
         )
     
     def get_match_period(self):
@@ -546,6 +550,14 @@ class Match:
             return "N/D"
         
         return "  \n".join(output)
+    
+    def get_fixtures(self):
+        for sc in self.sources:
+            if(sc.filled_data["fixtures_home"]):
+                home = sc.filled_data["fixtures_home"]
+                away = sc.filled_data["fixtures_away"]
+                return home,away
+        return "N/D","N/D"
     
 def get_path_value(obj, path, default_value=None):
     for i in path.split("."):

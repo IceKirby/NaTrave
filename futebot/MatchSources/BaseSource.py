@@ -101,7 +101,9 @@ class MatchSource:
             "feed": 0,
             
             "broadcast": 0,
-            "video": 0
+            "video": 0,
+            'fixtures_home':0,
+            'fixtures_home':0
         }
         self.stats = Statistics()
         
