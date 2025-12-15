@@ -198,8 +198,8 @@ class Match:
             PostMatchThread = "" if not "post_match_ref" in extra else extra["post_match_ref"],
             MatchThreadUrl = "" if not "match_ref" in extra else extra["match_ref"],
             LinkGE = "" if not "source_link" in extra else extra["source_link"],
-            Fixtures_home = home_fixtures,
-            Fixtures_away = away_fixtures,
+            FixturesHome = home_fixtures,
+            FixturesAway = away_fixtures,
 
         )
     

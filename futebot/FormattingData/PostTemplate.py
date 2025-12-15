@@ -107,9 +107,9 @@ Estatísticas
 ---  
 ### Próximos Jogos  
   
-{TimeCasa}: {Fixtures_home}
+{TimeCasa}: {FixturesHome}
 
-{TimeFora}: {Fixtures_away}
+{TimeFora}: {FixturesAway}
   
 ---  
   
