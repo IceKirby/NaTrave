@@ -595,20 +595,22 @@ class Source365Scores(MatchSource):
         #given a team 365score id (mineiro is 1209, ream madrid is 131 etc), returns a list of strings with the following format
         #(opponent_name{str} Casa|Fora{str})
         #containing the next {max_results} games for that team
-        if not isinstance(team_id, int):
-            return ("err","invalid team_id on get_team_fixtures")
-        target_url = f"https://webws.365scores.com/web/games/fixtures/?appTypeId=5&langId=31&userCountryId=131&competitors={team_id}"
-        response = requests.get(target_url)
-        res_json = response.json()
+        err = False;
         fixtures = []
-        for game in res_json['games']:
-            if game['id'] == current_game['id']: #means current tracked match still appears as fixture
-                continue
-            if (game['homeCompetitor']['id'] == team_id):
-                fixtures.append((game['awayCompetitor']["name"]+" (Casa)"))
-            else:
-                fixtures.append((game['homeCompetitor']["name"]+" (Fora)"))
-            
-            if(len(fixtures) >= max_results):
-                break
+        if isinstance(team_id, int): #valid teamid
+            target_url = f"https://webws.365scores.com/web/games/fixtures/?appTypeId=5&langId=31&userCountryId=131&competitors={team_id}"
+            response = requests.get(target_url)
+            res_json = response.json()
+            for game in res_json['games']:
+                if game['id'] == current_game['id']: #means current tracked match still appears as fixture
+                    continue
+                if (game['homeCompetitor']['id'] == team_id):
+                    fixtures.append((game['awayCompetitor']["name"]+" (Casa)"))
+                else:
+                    fixtures.append((game['homeCompetitor']["name"]+" (Fora)"))
+                
+                if(len(fixtures) >= max_results):
+                    break
+        if (len(fixtures) <1):
+            fixtures.append("N/D")
         return fixtures
