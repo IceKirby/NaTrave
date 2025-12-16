@@ -351,11 +351,11 @@ class Match:
         if period == MatchPeriod.interval:
             return "Intervalo"
         elif period == MatchPeriod.preparing_extra_time:
-            return "Fim do Segundo Tempo"
+            return "Fim do Tempo Regulamentar"
         elif period == MatchPeriod.extra_interval:
             return "Intervalo da Prorrogação"
         elif period == MatchPeriod.preparing_penalties:
-            return "Fim da Prorrogação"
+            return "Pênaltis"
         return "Intervalo"
 
     def get_play_icon(self, type):
