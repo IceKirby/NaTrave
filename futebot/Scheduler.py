@@ -8,6 +8,7 @@ import MatchManager
 from ErrorPrinter import print_error
 from psycopg2.errors import UniqueViolation
 from prawcore.exceptions import Forbidden
+from praw.exceptions import RedditAPIException
 from sqlalchemy import or_, and_
 from Models import Match, Thread, Sub, Hub, Request, MatchPeriod, Follow, PendingUnpin, SuggestedSort, BlockedUser
 from DB import db_session
@@ -645,6 +646,12 @@ def create_base_thread(thread_data, match_data, sub_data):
     except Forbidden as e:
         print("403 Token, Source: Create Match Thread")
         SubLockManager.add_forbidden_access_count(sub_data.sub_name)
+        return None
+    except RedditAPIException as e:
+        for err in e.items:
+            if err.error_type == "SUBREDDIT_NOTALLOWED":
+                print("403 Token, Source: Create Match Thread")
+                SubLockManager.add_forbidden_access_count(sub_data.sub_name)
         return None
     except Exception as e:
         print_error(e)
