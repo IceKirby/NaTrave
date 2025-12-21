@@ -64,7 +64,7 @@ class SourceGE(MatchSource):
         if referees:
             rolesDict = {"arbitroPrincipal": "Árbitro Principal", "arbitroAssistente1": "Assistente 1", "arbitroAssistente2": "Assistente 2", "quartoArbitro": "Quarto Árbitro"}
             for key,value in rolesDict.items():
-                if key in referees:
+                if key in referees and referees[key] and "nome_popular" in referees[key]:
                     self.add_referee(referees[key]["nome_popular"], value)
         
         # Plays Feed
