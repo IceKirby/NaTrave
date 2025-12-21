@@ -7,7 +7,7 @@ from ScheduleSources.ScheduleMatch import ScheduleMatch, ScheduleState
 from ScheduleSources.BaseSchedule import BaseSchedule
 from BotUtils import normalize_name
 
-GE_HASH = os.environ.get('GE_HASH') or "no ge_hash on os.environ"
+GE_HASH = os.environ.get('GE_HASH')# or "no ge_hash on os.environ"
 
 class ScheduleGE(BaseSchedule):
     

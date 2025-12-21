@@ -107,9 +107,13 @@ Estatísticas
 ---  
 ### Próximos Jogos  
   
-{TimeCasa}: {FixturesHome}
+### {TimeCasa}
 
-{TimeFora}: {FixturesAway}
+{FixturesHome}
+
+### {TimeFora}
+
+{FixturesAway}
   
 ---  
   

@@ -55,7 +55,7 @@ class Match:
     def update_sources(self):
         self.sources = []
         for url in self.urls:
-            #print(url) this is prime time to capture/log that url
+            #print(url) #this is prime time to capture/log that url
             source = None
             # Check URL origin
             if "ge.globo.com" in url:

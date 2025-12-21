@@ -124,8 +124,8 @@ class Source365Scores(MatchSource):
 
         # Fixtures (a.k.a. next games)
         if stats:
-            self.filled_data["fixtures_home"] = ", ".join(self.get_team_fixtures(game, home_id))
-            self.filled_data["fixtures_away"] = ", ".join( self.get_team_fixtures(game, away_id))           
+            self.filled_data["fixtures_home"] = self.format_fixtures(self.get_team_fixtures(game, home_id))
+            self.filled_data["fixtures_away"] = self.format_fixtures(self.get_team_fixtures(game, away_id))           
         
         self.was_updated = True
         
@@ -592,8 +592,8 @@ class Source365Scores(MatchSource):
             return super().player_name(id)
 
     def get_team_fixtures(self, current_game, team_id, max_results=3):
-        #given a team 365score id (mineiro is 1209, ream madrid is 131 etc), returns a list of strings with the following format
-        #(opponent_name{str} Casa|Fora{str})
+        #given a team 365score id (mineiro is 1209, ream madrid is 131 etc), returns a list of tuples containing the following
+        #(opponent_name{str},Casa|Fora{str},match_start_time{formatted str}, competition_name{str})
         #containing the next {max_results} games for that team
         fixtures = []
         if isinstance(team_id, int): #valid teamid
@@ -603,13 +603,50 @@ class Source365Scores(MatchSource):
             for game in res_json['games']:
                 if game['id'] == current_game['id']: #means current tracked match still appears as fixture
                     continue
-                if (game['homeCompetitor']['id'] == team_id):
-                    fixtures.append((game['awayCompetitor']["name"]+" (Casa)"))
-                else:
-                    fixtures.append((game['homeCompetitor']["name"]+" (Fora)"))
+                
+                location    = "Casa" if (game['homeCompetitor']['id'] == team_id) else "Fora"
+                match_start = game['startTime']
+                competition = game['competitionDisplayName']
+                opponent    = game['awayCompetitor']["name"] if location == "Casa" else game['homeCompetitor']["name"]
+                fixtures.append((opponent,location,match_start,competition))
                 
                 if(len(fixtures) >= max_results):
                     break
-        if (len(fixtures) <1):
-            fixtures.append("N/D")
         return fixtures
+
+    def format_fixtures(self, fixtures, display_location=True,display_time=True,display_competition=True):
+        #please input tuple list from get_team_fixtures
+        #format it as reddit table.
+        from BotUtils import iso8601_to_read_friendly
+        if not fixtures:
+            return "N/D"
+        
+        header = "Adversário"
+        if display_location:
+            header += " | Local"
+        if display_time:
+            header += " | Agenda"
+        if display_competition:
+            header += " | Certame"
+        header += "\n"
+
+        alignment = ":--"  #field OPPONENT is always true
+        for i in range(sum([display_location,display_time,display_competition])): #every other field will take up another column
+            alignment += " | :--"
+        alignment += '\n'
+
+        lines = ''
+        for fixture in fixtures:
+            opponent,location,match_start,competition = fixture
+            formatted_fix = opponent
+            if display_location:
+                formatted_fix += " | " + location
+            if display_time:
+                formatted_fix += " | " + iso8601_to_read_friendly(match_start)
+            if display_competition:
+                formatted_fix += " | " + competition
+
+            lines += formatted_fix + "\n" 
+        formatted_fixtures = header + alignment + lines + "\n"
+        return formatted_fixtures
+        
