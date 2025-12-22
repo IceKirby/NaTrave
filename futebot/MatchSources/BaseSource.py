@@ -128,7 +128,8 @@ class MatchSource:
         # Misc
         self.broadcast = []
         self.videos = []
-        
+        self.fixtures_home = []
+        self.fixtures_away = []
     
     def process_data(self, url):
         return None
@@ -292,6 +293,10 @@ class MatchSource:
             for index,value in reversed(transitions.items()):
                 self.feed.insert(index, value)
     
+    def add_fixtures(self, fixtures_home, fixtures_away):
+        self.fixtures_home = fixtures_home
+        self.fixtures_away = fixtures_away
+
     ### Helpers ###
     def invert_team_id(self, id):
         return "home" if id == "away" else "away"

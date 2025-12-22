@@ -124,8 +124,12 @@ class Source365Scores(MatchSource):
 
         # Fixtures (a.k.a. next games)
         if stats:
-            self.filled_data["fixtures_home"] = self.format_fixtures(self.get_team_fixtures(game, home_id))
-            self.filled_data["fixtures_away"] = self.format_fixtures(self.get_team_fixtures(game, away_id))           
+
+            home_fixtures = self.get_team_fixtures(game, home_id)
+            away_fixtures = self.get_team_fixtures(game, away_id)
+            self.add_fixtures(home_fixtures,away_fixtures)
+            self.filled_data["fixtures_home"] = len(home_fixtures)
+            self.filled_data["fixtures_away"] = len(away_fixtures)
         
         self.was_updated = True
         
@@ -614,39 +618,4 @@ class Source365Scores(MatchSource):
                     break
         return fixtures
 
-    def format_fixtures(self, fixtures, display_location=True,display_time=True,display_competition=True):
-        #please input tuple list from get_team_fixtures
-        #format it as reddit table.
-        from BotUtils import iso8601_to_read_friendly
-        if not fixtures:
-            return "N/D"
-        
-        header = "Adversário"
-        if display_location:
-            header += " | Local"
-        if display_time:
-            header += " | Agenda"
-        if display_competition:
-            header += " | Certame"
-        header += "\n"
-
-        alignment = ":--"  #field OPPONENT is always true
-        for i in range(sum([display_location,display_time,display_competition])): #every other field will take up another column
-            alignment += " | :--"
-        alignment += '\n'
-
-        lines = ''
-        for fixture in fixtures:
-            opponent,location,match_start,competition = fixture
-            formatted_fix = opponent
-            if display_location:
-                formatted_fix += " | " + location
-            if display_time:
-                formatted_fix += " | " + iso8601_to_read_friendly(match_start)
-            if display_competition:
-                formatted_fix += " | " + competition
-
-            lines += formatted_fix + "\n" 
-        formatted_fixtures = header + alignment + lines + "\n"
-        return formatted_fixtures
         
