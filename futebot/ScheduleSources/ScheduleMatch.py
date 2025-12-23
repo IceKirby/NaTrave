@@ -88,8 +88,6 @@ class ScheduleMatch:
             Data = format_date(self.date),
             Horario = format_time(self.time),
             MatchThreadUrl = "" if not match_url else "**Match  Thread:** " + match_url,
-            FixturesHome = self.fixtures_home or "N/D",
-            FixturesAway = self.fixtures_away or "N/D",
         )
     
     def to_standard_names(self):

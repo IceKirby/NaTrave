@@ -114,23 +114,20 @@ class Source365Scores(MatchSource):
                 continue
             self.add_broadcast(b["name"])
         
+        home_id = self.get_path_value(game, "homeCompetitor.id", None)
+        away_id = self.get_path_value(game, "awayCompetitor.id", None)
         # Statistics
         stats = self.fetch_data("https://webws.365scores.com/web/game/stats/?langId=31&games=" + str(self.get_path_value(game, "id", "")))
-        if stats:
-            home_id = self.get_path_value(game, "homeCompetitor.id", None)
-            away_id = self.get_path_value(game, "awayCompetitor.id", None)
+        if stats:            
             self.set_statistics(home_id, away_id, self.get_path_value(stats, "statistics", []))
         self.filled_data["stats"] = self.stats.count()
 
         # Fixtures (a.k.a. next games)
-        if stats:
-
-            home_fixtures = self.get_team_fixtures(game, home_id)
-            away_fixtures = self.get_team_fixtures(game, away_id)
-            self.add_fixtures(home_fixtures,away_fixtures)
-            self.filled_data["fixtures_home"] = len(home_fixtures)
-            self.filled_data["fixtures_away"] = len(away_fixtures)
-        
+        home_fixtures = self.get_team_fixtures(game, home_id)
+        away_fixtures = self.get_team_fixtures(game, away_id)
+        self.add_fixtures(home_fixtures,away_fixtures)
+        self.filled_data["fixtures_home"] = len(home_fixtures)
+        self.filled_data["fixtures_away"] = len(away_fixtures)
         self.was_updated = True
         
     ### ############### ###
