@@ -114,14 +114,20 @@ class Source365Scores(MatchSource):
                 continue
             self.add_broadcast(b["name"])
         
+        home_id = self.get_path_value(game, "homeCompetitor.id", None)
+        away_id = self.get_path_value(game, "awayCompetitor.id", None)
         # Statistics
         stats = self.fetch_data("https://webws.365scores.com/web/game/stats/?langId=31&games=" + str(self.get_path_value(game, "id", "")))
-        if stats:
-            home_id = self.get_path_value(game, "homeCompetitor.id", None)
-            away_id = self.get_path_value(game, "awayCompetitor.id", None)
+        if stats:            
             self.set_statistics(home_id, away_id, self.get_path_value(stats, "statistics", []))
         self.filled_data["stats"] = self.stats.count()
-        
+
+        # Fixtures (a.k.a. next games)
+        home_fixtures = self.get_team_fixtures(game, home_id)
+        away_fixtures = self.get_team_fixtures(game, away_id)
+        self.add_fixtures(home_fixtures,away_fixtures)
+        self.filled_data["fixtures_home"] = len(home_fixtures)
+        self.filled_data["fixtures_away"] = len(away_fixtures)
         self.was_updated = True
         
     ### ############### ###
@@ -585,3 +591,28 @@ class Source365Scores(MatchSource):
             return self.unknown_players[id]
         else:
             return super().player_name(id)
+
+    def get_team_fixtures(self, current_game, team_id, max_results=3):
+        #given a team 365score id (mineiro is 1209, ream madrid is 131 etc), returns a list of tuples containing the following
+        #(opponent_name{str},Casa|Fora{str},match_start_time{formatted str}, competition_name{str})
+        #containing the next {max_results} games for that team
+        fixtures = []
+        if isinstance(team_id, int): #valid teamid
+            target_url = f"https://webws.365scores.com/web/games/fixtures/?appTypeId=5&langId=31&userCountryId=131&competitors={team_id}"
+            response = requests.get(target_url)
+            res_json = response.json()
+            for game in res_json['games']:
+                if game['id'] == current_game['id']: #means current tracked match still appears as fixture
+                    continue
+                
+                location    = "Casa" if (game['homeCompetitor']['id'] == team_id) else "Fora"
+                match_start = game['startTime']
+                competition = game['competitionDisplayName']
+                opponent    = game['awayCompetitor']["name"] if location == "Casa" else game['homeCompetitor']["name"]
+                fixtures.append((opponent,location,match_start,competition))
+                
+                if(len(fixtures) >= max_results):
+                    break
+        return fixtures
+
+        

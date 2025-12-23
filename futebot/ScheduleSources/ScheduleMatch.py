@@ -87,7 +87,7 @@ class ScheduleMatch:
             PlacarVisitante = self.get_score("away"),
             Data = format_date(self.date),
             Horario = format_time(self.time),
-            MatchThreadUrl = "" if not match_url else "**Match  Thread:** " + match_url
+            MatchThreadUrl = "" if not match_url else "**Match  Thread:** " + match_url,
         )
     
     def to_standard_names(self):

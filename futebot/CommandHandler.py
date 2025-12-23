@@ -9,7 +9,7 @@ from Models import Sub
 from BotUtils import strip_command_name, format_sub_name, format_user_name
 from prawcore import PrawcoreException
 
-BOT_ADMIN = os.environ.get('BOT_ADMIN').lower()
+BOT_ADMIN = (os.environ.get('BOT_ADMIN') or "BOT_ADMIN not found at os.env").lower()
 
 def try_command(pm):
     # Cancel PM and marks as read without executing anything if no author data

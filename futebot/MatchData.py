@@ -55,6 +55,7 @@ class Match:
     def update_sources(self):
         self.sources = []
         for url in self.urls:
+            #print(url) #this is prime time to capture/log that url
             source = None
             # Check URL origin
             if "ge.globo.com" in url:
@@ -150,7 +151,7 @@ class Match:
         period = self.get_match_period()
         match_time = self.choose_value("match_time", "state.time", "0")
         stats_source = self.choose_source("stats")
-
+        home_fixtures,away_fixtures = self.get_fixtures()
 
         home_aggregated = self.choose_value("aggregated_score", "state.home_aggregated", None)
         away_aggregated = self.choose_value("aggregated_score", "state.away_aggregated", None)
@@ -197,6 +198,9 @@ class Match:
             PostMatchThread = "" if not "post_match_ref" in extra else extra["post_match_ref"],
             MatchThreadUrl = "" if not "match_ref" in extra else extra["match_ref"],
             LinkGE = "" if not "source_link" in extra else extra["source_link"],
+            FixturesHome = self.format_fixtures(home_fixtures),
+            FixturesAway = self.format_fixtures(away_fixtures),
+
         )
     
     def get_match_period(self):
@@ -427,6 +431,42 @@ class Match:
             if p.player_in == player_id:
                 return True
         return False
+    
+    def format_fixtures(self, fixtures, display_location=True,display_time=True,display_competition=True):
+        #please input tuple list from get_team_fixtures
+        #format it as reddit table.
+        from BotUtils import iso8601_to_read_friendly
+        if not fixtures:
+            return "N/D"
+        
+        header = "Adversário"
+        if display_location:
+            header += " | Local"
+        if display_time:
+            header += " | Agenda"
+        if display_competition:
+            header += " | Certame"
+        header += "\n"
+
+        alignment = ":--"  #field OPPONENT is always true
+        for i in range(sum([display_location,display_time,display_competition])): #every other field will take up another column
+            alignment += " | :--"
+        alignment += '\n'
+
+        lines = ''
+        for fixture in fixtures:
+            opponent,location,match_start,competition = fixture
+            formatted_fix = opponent
+            if display_location:
+                formatted_fix += " | " + location
+            if display_time:
+                formatted_fix += " | " + iso8601_to_read_friendly(match_start)
+            if display_competition:
+                formatted_fix += " | " + competition
+
+            lines += formatted_fix + "\n" 
+        formatted_fixtures = header + alignment + lines + "\n"
+        return formatted_fixtures
 
     ### ##################### ###
     ### Match Score Functions ###
@@ -546,6 +586,11 @@ class Match:
             return "N/D"
         
         return "  \n".join(output)
+    
+    def get_fixtures(self):
+        home = self.choose_value("fixtures_home","fixtures_home")
+        away = self.choose_value("fixtures_away","fixtures_away")
+        return home,away
     
 def get_path_value(obj, path, default_value=None):
     for i in path.split("."):
