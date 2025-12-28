@@ -17,9 +17,13 @@ def try_command(pm):
         return True
     
     # Cancel PM and marks as read without executing anything if unknown command
-    command = find_command_name(pm)
+    comm = extract_command(pm.body.replace(';','\n').split('\n')[0])
+    command = find_command_name(comm)
     if not command:
-        return True
+        comm = strip_command_name(pm.subject)
+        command = find_command_name(comm)
+        if not command:
+            return True
     
     # Cancel PM and marks as read without executing anything if no sub detected
     lines = split_into_lines(pm.body)
@@ -87,14 +91,7 @@ def try_command(pm):
         print_error(e)
         return False
 
-def find_command_name(msg):
-    #given a Message, find the command either on the subject of a pm, or on the first line of a chat
-    CHAT_SUBJECT = "[direct chat room]"
-    if msg.subject == CHAT_SUBJECT:
-        comm = extract_command(msg.body.replace(';','\n').split('\n')[0])
-    else:
-        comm = strip_command_name(msg.subject)        
-
+def find_command_name(comm):
     if comm in command_data:
         return comm
     
