@@ -162,3 +162,17 @@ def strip_command_name(name):
     n = strip_accents(name.lower().strip())
     n = re.sub(r"[\s\-]", "", n)
     return n
+
+def extract_command(line):
+    """
+    {assunto|comando}{:|-}$command
+    <$command>
+    [$command]
+    """
+    line = line.lower().strip()
+    p = r'<([\w ]+)>|\[([\w ]+)\]|(?:assunto|comando)\s*[:\-]\s*([\w ]+)'
+    cmd = re.search(p,line,re.UNICODE)
+    if cmd:
+        return [group for group in cmd.groups() if group is not None][0].replace(" ","")
+    else:
+        return line.replace(" ","")

@@ -6,7 +6,7 @@ import os
 from ErrorPrinter import print_error
 from DB import db_session
 from Models import Sub
-from BotUtils import strip_command_name, format_sub_name, format_user_name
+from BotUtils import strip_command_name, format_sub_name, format_user_name, extract_command
 from prawcore import PrawcoreException
 
 BOT_ADMIN = (os.environ.get('BOT_ADMIN') or "BOT_ADMIN not found at os.env").lower()
@@ -17,7 +17,7 @@ def try_command(pm):
         return True
     
     # Cancel PM and marks as read without executing anything if unknown command
-    command = find_command_name(pm.subject)
+    command = find_command_name(pm)
     if not command:
         return True
     
@@ -87,8 +87,14 @@ def try_command(pm):
         print_error(e)
         return False
 
-def find_command_name(comm):
-    comm = strip_command_name(comm)
+def find_command_name(msg):
+    #given a Message, find the command either on the subject of a pm, or on the first line of a chat
+    CHAT_SUBJECT = "[direct chat room]"
+    if msg.subject == CHAT_SUBJECT:
+        comm = extract_command(msg.body.replace(';','\n').split('\n')[0])
+    else:
+        comm = strip_command_name(msg.subject)        
+
     if comm in command_data:
         return comm
     
