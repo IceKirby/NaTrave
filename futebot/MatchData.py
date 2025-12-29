@@ -588,8 +588,8 @@ class Match:
         return "  \n".join(output)
     
     def get_fixtures(self):
-        home = self.choose_value("fixtures_home","fixtures_home")
-        away = self.choose_value("fixtures_away","fixtures_away")
+        home = self.choose_value("fixtures_home","fixtures_home", None)
+        away = self.choose_value("fixtures_away","fixtures_away", None)
         return home,away
     
 def get_path_value(obj, path, default_value=None):
