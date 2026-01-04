@@ -12,6 +12,8 @@ from prawcore import PrawcoreException
 BOT_ADMIN = (os.environ.get('BOT_ADMIN') or "BOT_ADMIN not found at os.env").lower()
 
 def try_command(pm):
+    if handle_mod_invite(pm):
+        return True
     # Cancel PM and marks as read without executing anything if no author data
     if pm.author == None:
         return True
@@ -169,3 +171,10 @@ def allow_even_locked(comm):
 
 def is_bot_admin(author):
     return format_user_name(author).lower() == BOT_ADMIN
+
+def handle_mod_invite(pm):
+    #handles mod invites. returns true if it was a valid invite, false otherwise
+    if pm.author == None and pm.subject.startswith('Invitation to moderate'):
+        return Redditor.auto_accept_mod(pm)
+    else:
+        return False
