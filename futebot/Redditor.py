@@ -181,22 +181,6 @@ def accept_mod(author, sub, lines, pm):
         except Exception as e:
             PMResponse.add_response(author, "mod_invite_fail", sub, pm)
             return True
-        
-def auto_accept_mod(pm):
-    #auto accepts mod invitations if valid
-    subreddit = find_sub(pm.subject.split()[-1])
-    if subreddit == None:
-       return True
-    elif not CommandHandler.sub_is_registered(format_sub_name(subreddit.display_name)):
-        print(f'Failed attempted mod invite, unregistered sub r/{subreddit.display_name}')
-        return True
-    else:
-        try:
-            subreddit.mod.accept_invite()
-            print(f'Successfully now a mod of r/{subreddit.display_name}')
-            return True
-        except Exception as e:
-            return True
 
 def find_sub(subname):
     try:
