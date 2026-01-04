@@ -14,23 +14,23 @@ BOT_ADMIN = (os.environ.get('BOT_ADMIN') or "BOT_ADMIN not found at os.env").low
 def try_command(pm):
     if is_mod_invite(pm):
         #auto handles mod invite, author (recipient) will be the subreddit "message the mods"
-        comm, sub, author   = 'mod', pm.subject.split()[-1], pm.subject.split()[-1]
+        comm, sub, author, lines   = 'mod', pm.subject.split()[-1], pm.subject.split()[-1], []
     else:
         # Cancel PM and marks as read without executing anything if no author data
         if pm.author == None:
             return True
         author = pm.author.name
-        sub = detect_sub_name(lines)
+        lines  = split_into_lines(pm.body)
+        sub    = detect_sub_name(lines)
+        comm   = extract_command(pm.body.replace(';','\n').split('\n')[0])
         
-        comm = extract_command(pm.body.replace(';','\n').split('\n')[0])
     command = find_command_name(comm)
     if not command:
         comm = strip_command_name(pm.subject)
         command = find_command_name(comm)
         # Cancel PM and marks as read without executing anything if unknown command
         if not command:
-            return True
-    lines = split_into_lines(pm.body)
+            return True 
     
     # Cancel PM and marks as read without executing anything if no sub detected
     if not sub:
