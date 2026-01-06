@@ -18,7 +18,7 @@ def add_response(username, type, data, pm = None):
     # Removes /u/ from username
     user = format_user_name(username)
     
-    # Creates UserResponse data if it doesn't exists
+    # Creates UserResponse data if it doesn't exist
     if not user in pending_responses:
         pending_responses[user] = UserResponse(user)
     

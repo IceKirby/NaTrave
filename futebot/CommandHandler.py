@@ -12,23 +12,27 @@ from prawcore import PrawcoreException
 BOT_ADMIN = (os.environ.get('BOT_ADMIN') or "BOT_ADMIN not found at os.env").lower()
 
 def try_command(pm):
-    # Cancel PM and marks as read without executing anything if no author data
-    if pm.author == None:
-        return True
-    
-    # Cancel PM and marks as read without executing anything if unknown command
-    comm = extract_command(pm.body.replace(';','\n').split('\n')[0])
+    if is_mod_invite(pm):
+        #auto handles mod invite, author (recipient) will be the subreddit "message the mods"
+        comm, sub, author, lines   = 'mod', pm.subject.split()[-1], pm.subject.split()[-1], []
+    else:
+        # Cancel PM and marks as read without executing anything if no author data
+        if pm.author == None:
+            return True
+        author = pm.author.name
+        lines  = split_into_lines(pm.body)
+        sub    = detect_sub_name(lines)
+        comm   = extract_command(pm.body.replace(';','\n').split('\n')[0])
+        
     command = find_command_name(comm)
     if not command:
         comm = strip_command_name(pm.subject)
         command = find_command_name(comm)
+        # Cancel PM and marks as read without executing anything if unknown command
         if not command:
-            return True
+            return True 
     
     # Cancel PM and marks as read without executing anything if no sub detected
-    lines = split_into_lines(pm.body)
-    sub = detect_sub_name(lines)
-    author = pm.author.name
     if not sub:
         PMResponse.add_response(author, "no_sub_specified", {}, pm)
         return True
@@ -169,3 +173,8 @@ def allow_even_locked(comm):
 
 def is_bot_admin(author):
     return format_user_name(author).lower() == BOT_ADMIN
+
+def is_mod_invite(pm):
+    #auto handles mod invites. returns true if it was a valid invite, false otherwise
+    #an auto mod invitation is an authorless pm with the subject "Invitation to moderate r/yoursub"
+    return pm.author == None and pm.subject.startswith('Invitation to moderate')

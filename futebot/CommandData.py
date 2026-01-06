@@ -138,9 +138,9 @@ command_data = {
     "mod": {
         "action": Redditor.accept_mod,
         "options": {
-            "registered_sub": False,
+            "registered_sub": True,
             "allow_locked": False,
-            "mod_only": True,
+            "mod_only": False,
             "mod_only_by_options": False
         },
         "alts": ["moderador"]
