@@ -102,7 +102,7 @@ def to_datetime_from_input(val):
 def iso8601_to_read_friendly(val):
     #converts "2026-01-11T19:00:00+00:00" to "01/11 às 00:00"
     date_t = datetime.fromisoformat(val)
-    return date_t.strftime("%d/%m às %-H:%M")
+    return date_t.strftime("%d/%m às %H:%M")
 
 ### String Utils
 class SafeDict(dict):

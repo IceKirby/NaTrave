@@ -598,7 +598,7 @@ class Source365Scores(MatchSource):
         #containing the next {max_results} games for that team
         fixtures = []
         if isinstance(team_id, int): #valid teamid
-            target_url = f"https://webws.365scores.com/web/games/fixtures/?appTypeId=5&langId=31&userCountryId=131&competitors={team_id}"
+            target_url = f"https://webws.365scores.com/web/games/fixtures/?appTypeId=5&langId=31&userCountryId=21&timezoneName=Etc/GMT+3&competitors={team_id}"
             response = requests.get(target_url)
             res_json = response.json()
             for game in res_json['games']:
