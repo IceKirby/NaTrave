@@ -17,7 +17,7 @@ class Source365Scores(MatchSource):
         # Get main data
         # url = f"https://webws.365scores.com/web/game/?gameId={url}&langId=31"
         data = self.fetch_data(url)
-        if not data:
+        if not data or not "game" in data:
             return
         
         game = data["game"]

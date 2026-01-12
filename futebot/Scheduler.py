@@ -378,6 +378,7 @@ def schedule_follows():
     with db_session() as s:
         follows = s.query(Follow, Sub)\
             .join(Sub)\
+            .filter(Sub.locked == False)\
             .all()
         
         try:
