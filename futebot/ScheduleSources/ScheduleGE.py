@@ -33,6 +33,9 @@ class ScheduleGE(BaseSchedule):
         except Exception as e:
             return None
         
+        if not data:
+            return None
+
         result = []
         
         for tour in data:
