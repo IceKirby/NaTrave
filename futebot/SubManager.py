@@ -6,7 +6,7 @@ import NameTranslator
 from ErrorPrinter import print_error
 from psycopg2.errors import UniqueViolation
 from sqlalchemy import and_, func
-from Models import Sub, Follow, BlockedUser
+from Models import Sub, Thread, Follow, BlockedUser
 from DB import db_session
 from SubredditConfigOpt import config_options
 from BotUtils import now, strip_command_name, convert_date, to_datetime_from_input, format_user_name
@@ -35,6 +35,9 @@ def register_sub(author, sub_name, lines, pm):
 def unregister_sub(author, sub_name, lines, pm):
     with db_session() as s:
         sub = s.query(Sub).filter(Sub.sub_name.ilike(sub_name)).first()
+
+        s.query(Thread).filter(Thread.sub == sub.id).delete()
+
         s.delete(sub)
             
     if s.success:
