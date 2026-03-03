@@ -12,6 +12,7 @@ import Redditor
 import SubManager
 import MatchManager
 import HubManager
+import RoundManager
 import Scheduler
 import PMResponse
 import SubLockManager
@@ -72,6 +73,9 @@ def start_up():
         
         # Searchs for URL for matches about to start
         Scheduler.find_match_links()
+
+        # Creates Round Threads
+        RoundManager.create_round_threads()
         
         # Creates the thread for match threads
         Scheduler.create_match_threads()

@@ -178,6 +178,37 @@ hub_match_postponed_template = "Partida foi adiada"
 hub_match_link_untracked = "Partida sem tópico próprio"
 hub_previous_link = "[Link para a Match HUB do dia {Data}]({Link})"
 
+# ###################################### #
+# Thread Template for Round threads
+# ###################################### #
+round_template = """
+# {TorneioRodada} ({Data}):  
+  
+**Partidas:**  
+  
+{Partidas}  
+  
+---  
+  
+**Tabela:**  
+  
+{Tabela}  
+  
+---  
+  
+**Eventos:**  
+  
+{Lances}
+
+---  
+  
+Gosta do NaTrave? [Seja um apoiador no Catarse!](https://www.catarse.me/natrave)
+  
+"""
+round_match_template = "- [{Estado}] {Mandante} {Placar} {Visitante} {Links}"
+round_event_template = "- **{Horario}** {Icone} {Mandante} {Placar} {Visitante} | {EventoDesc} | {Tempo}"
+round_table_header = "Time | Pts | V | E | D | GP | GC | SG"
+
 # ################################ #
 # Icons used in match descriptions
 # ################################ #

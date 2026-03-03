@@ -175,6 +175,16 @@ command_data = {
         },
         "alts": ["partidasemtopico", "jogosemtopico", "matchsemtopico", "partidasemmt", "jogosemmt", "matchsemmt"]
     },
+    "rodada": {
+        "action": Scheduler.request_round_thread,
+        "options": {
+            "registered_sub": True,
+            "allow_locked": False,
+            "mod_only": True,
+            "mod_only_by_options": True
+        },
+        "alts": ["roundthread", "topicoderodada"]
+    },
     "dbfix": {
         "action": AdminTools.update_follow_names,
         "options": {

@@ -309,6 +309,11 @@ class Match:
             Video = video
         )
     
+    def get_current_moment(self):
+        period = self.get_match_period()
+        time = self.choose_value("match_time", "state.time", "0")
+        return self.get_moment(period, time)
+
     # Get the moment description for a specific event
     def get_moment(self, period, time, alt_end = False):
         if period in [MatchPeriod.upcoming, MatchPeriod.pre_match]:

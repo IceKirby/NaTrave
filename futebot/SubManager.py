@@ -9,7 +9,7 @@ from sqlalchemy import and_, func
 from Models import Sub, Follow, BlockedUser
 from DB import db_session
 from SubredditConfigOpt import config_options
-from BotUtils import now, strip_command_name, convert_date, to_datetime_from_input, format_user_name
+from BotUtils import now, strip_command_name, convert_date, to_datetime_from_input, format_user_name, split_params
 from praw.exceptions import InvalidURL
 
 has_new_follows = False
@@ -387,17 +387,6 @@ def has_existing_follow(follows, tour, team):
         if f.tour.lower() == tour.lower() and f.team.lower() == team.lower():
             return True
     return False
-
-def split_params(lines):
-    result = []
-    for l in lines:
-        parts = l.split("=")
-        if len(parts) > 1:
-            result.append({
-                "param": parts[0].strip(),
-                "value": parts[1].strip()
-            })
-    return result
 
 def describe_config(name):
     if name in config_options:

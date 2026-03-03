@@ -195,6 +195,21 @@ class Hub(Base):
     finished = Column(Boolean(), nullable=False, default=False)
     parent = relationship('Sub', backref=backref('Hub', passive_deletes=True))
 
+class Round(Base):
+    __tablename__ = "round"
+    id = Column(Integer, primary_key=True)
+    sub = Column(Integer, ForeignKey("sub.id", ondelete="CASCADE"), nullable=False)
+    date = Column(DateTime, nullable=False)
+    tournament = Column(String(255), nullable=False)
+    title = Column(String(500), nullable=False)
+    post_title = Column(String(500), nullable=False)
+    url = Column(String(500))
+    post_round_thread = Column(String(500))
+    supress_match_threads = Column(Boolean(), nullable=False, default=False)
+    finished = Column(Boolean(), nullable=False, default=False)
+    post_match_updates = Column(Integer, nullable=False, default=12)
+    parent = relationship('Sub', backref=backref('Round', passive_deletes=True))
+
 class Request(Base):
     __tablename__ = "request"
     id = Column(Integer, primary_key=True)

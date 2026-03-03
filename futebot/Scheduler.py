@@ -10,7 +10,7 @@ from psycopg2.errors import UniqueViolation
 from prawcore.exceptions import Forbidden
 from praw.exceptions import RedditAPIException
 from sqlalchemy import or_, and_
-from Models import Match, Thread, Sub, Hub, Request, MatchPeriod, Follow, PendingUnpin, SuggestedSort, BlockedUser
+from Models import Match, Thread, Sub, Hub, Round, Request, MatchPeriod, Follow, PendingUnpin, SuggestedSort, BlockedUser
 from DB import db_session
 from datetime import datetime, timedelta, timezone
 from FormattingData.PostTemplate import match_no_info
@@ -108,6 +108,60 @@ def request_match_silent(author, sub_name, lines, pm):
     
 def request_match_threadless(author, sub_name, lines, pm):
     return request_match(author, sub_name, lines, pm, True, False)
+
+def request_round_thread(author, sub_name, lines, pm):
+    params = BotUtils.split_params_dict(lines)
+    
+    # [Rodada]
+    # r/futebol
+    # 28/02/2026 15:00
+    # Campeonato=Campeonato Brasileiro
+    # Título=[Tópico da Rodada] Campeonato Brasileiro - Rodada 38
+    # Pós-Título=[Pós-Rodada] Campeonato Brasileiro - Rodada 38
+    # Tópico Único=Sim
+
+    # TODO: Default titles
+    date = find_date(lines)
+    tour = params["campeonato"]
+    title = params["titulo"]
+    post_title = params["postitulo"]
+    supress_threads = params["topicounico"] or "nao"
+    
+    if not date:
+        # TODO
+        # PMResponse.add_response(author, "request_match_error", sub_name, pm)
+        return;
+
+    if not tour:
+        # TODO
+        # PMResponse.add_response(author, "request_match_error", sub_name, pm)
+        return
+    
+    tour = NameTranslator.get_standard_tour_name(tour)
+    supress = BotUtils.normalize_name(supress_threads) == "sim"
+    
+    with db_session() as s:
+        sub = s.query(Sub).filter(Sub.sub_name.ilike(sub_name)).first()
+
+        round = Round(
+            sub=sub.id,
+            tournament=tour,
+            date=date,
+            title=title,
+            post_title=post_title,
+            supress_match_threads=supress
+        )
+
+        s.add(round)
+    
+    # TODO: Responses
+    if s.success:
+        # PMResponse.add_response(author, "request_match_success", requested_data, pm)
+        return True
+    else:
+        print_error(s.error)
+        # PMResponse.add_response(author, "request_match_error", sub_name, pm)
+        return True
 
 def restart_match(author, sub_name, lines, pm):
     # Parse the PM
@@ -420,6 +474,27 @@ def schedule_follows():
         return False
     else:
         return True
+
+def fill_tour_matches(tour):
+    today = BotUtils.today().strftime("%Y-%m-%d")
+    res = scheduleGE.find_followed_match(today, None, tour)
+    if res == None or len(res) == 0:
+        res = schedule365.find_followed_match(today, None, tour)
+        if res == None or len(res) == 0:
+            return
+        
+    with db_session() as s:
+        if len(res) > 0:
+            for sch in res:
+                # Ignore if no date or time found
+                if not sch.date or not sch.time:
+                    continue
+                
+                # Get Match's kick-off time
+                start_time = datetime.strptime(sch.date + " " + sch.time, "%Y-%m-%d %H:%M:%S")
+                
+                # Create/Get Match entry from DB
+                match = SchedulerHelpers.find_or_create_db_match(s, sch, start_time)
 
 def find_match_links():
     with db_session() as s:
@@ -771,9 +846,17 @@ def parse_match_request(lines, standard_names=True):
                 "away": has_match.group(3) if not standard_names else NameTranslator.get_standard_team_name(has_match.group(3))
             })
 
+    if date == None:
+        date = "0/0"
+    date = BotUtils.convert_date(date)
+
     if len(matches) > 0:
-        if date == None:
-            date = "0/0"
-        date = BotUtils.convert_date(date)
         return date, matches
-    return None, None
+    return date, None
+
+def find_date(lines):
+    for x in lines:
+        date = BotUtils.to_datetime_from_input(x.strip())
+        if date:
+            return date
+    return None

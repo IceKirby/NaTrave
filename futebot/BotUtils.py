@@ -176,3 +176,24 @@ def extract_command(line):
         return [group for group in cmd.groups() if group is not None][0].replace(" ","")
     else:
         return line.replace(" ","")
+
+# Converts lines with Parameter=Value into an array [{param: "Parameter", "value": "Value"}]
+def split_params(lines):
+    result = []
+    for l in lines:
+        parts = l.split("=")
+        if len(parts) > 1:
+            result.append({
+                "param": parts[0].strip(),
+                "value": parts[1].strip()
+            })
+    return result
+
+# Converts lines with Parameter=Value into a dict { Param: Value }
+def split_params_dict(lines):
+    result = {}
+    for l in lines:
+        parts = l.split("=")
+        if len(parts) > 1:
+            result[parts[0].strip().normalize_name(True)] = parts[1].strip()
+    return result
