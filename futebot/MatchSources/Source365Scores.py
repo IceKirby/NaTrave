@@ -601,18 +601,19 @@ class Source365Scores(MatchSource):
             target_url = f"https://webws.365scores.com/web/games/fixtures/?appTypeId=5&langId=31&userCountryId=21&timezoneName=Etc/GMT+3&competitors={team_id}"
             response = requests.get(target_url)
             res_json = response.json()
-            for game in res_json['games']:
-                if game['id'] == current_game['id']: #means current tracked match still appears as fixture
-                    continue
-                
-                location    = "Casa" if (game['homeCompetitor']['id'] == team_id) else "Fora"
-                match_start = game['startTime']
-                competition = game['competitionDisplayName']
-                opponent    = game['awayCompetitor']["name"] if location == "Casa" else game['homeCompetitor']["name"]
-                fixtures.append((opponent,location,match_start,competition))
-                
-                if(len(fixtures) >= max_results):
-                    break
+            if 'games' in res_json:
+                for game in res_json['games']:
+                    if game['id'] == current_game['id']: #means current tracked match still appears as fixture
+                        continue
+                    
+                    location    = "Casa" if (game['homeCompetitor']['id'] == team_id) else "Fora"
+                    match_start = game['startTime']
+                    competition = game['competitionDisplayName']
+                    opponent    = game['awayCompetitor']["name"] if location == "Casa" else game['homeCompetitor']["name"]
+                    fixtures.append((opponent,location,match_start,competition))
+                    
+                    if(len(fixtures) >= max_results):
+                        break
         return fixtures
 
         

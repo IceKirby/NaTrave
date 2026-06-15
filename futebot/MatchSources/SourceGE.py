@@ -392,5 +392,8 @@ class SourceGE(MatchSource):
         if re.match(exp, text):
             text = re.sub(exp, "", text)
             
+        if not text or len(text) == 0:
+            return text
+
         text = text[0].upper() + text[1:]
         return text
