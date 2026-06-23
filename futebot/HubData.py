@@ -36,7 +36,7 @@ class HubData:
         threads = s.query(Thread, Match)\
             .join(Match)\
             .filter(Thread.sub == self.sub)\
-            .filter(Match.start_time > today)\
+            .filter(Match.start_time >= today)\
             .filter(Match.start_time < tomorrow)\
             .all()
         
