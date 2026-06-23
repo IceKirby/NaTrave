@@ -195,5 +195,5 @@ def split_params_dict(lines):
     for l in lines:
         parts = l.split("=")
         if len(parts) > 1:
-            result[parts[0].strip().normalize_name(True)] = parts[1].strip()
+            result[normalize_name(parts[0].strip(), True)] = parts[1].strip()
     return result

@@ -29,6 +29,10 @@ def clear_match_objects():
         if p in ongoing_matches:
             ongoing_matches.pop(p)
 
+def set_matches_to_outdated():
+    for id,match in ongoing_matches.items():
+        match.is_up_to_date = False
+
 # Changes Matches and Threads's state from upcoming to pre_match 60 minutes before kick-off
 def start_pre_match():
     now = BotUtils.now()

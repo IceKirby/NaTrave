@@ -1,6 +1,6 @@
 import math
 from ErrorPrinter import print_error
-from FormattingData.PostTemplate import match_template, post_match_template, post_title_template, aggregated_score_template, match_icons, half_time_stats_template
+from FormattingData.PostTemplate import match_template, post_match_template, post_title_template, aggregated_score_template, match_icons, half_time_stats_template, round_play_template
 from BotUtils import format_str, zero_pad, format_time, format_date
 
 from MatchSources.SourceGE import SourceGE
@@ -12,6 +12,7 @@ class Match:
     def __init__(self, url):
         self.is_match_over = False
         self.is_finished = False
+        self.is_up_to_date = False
         self.detailed = True
         self.last_stats = None
         self.urls = []
@@ -24,6 +25,9 @@ class Match:
         if url != None:
             self.update_urls(url)
         
+        if self.is_up_to_date:
+            return True
+
         try:
             # Update sources' contents
             self.update_sources()
@@ -41,6 +45,7 @@ class Match:
             return False
         
         # Data was updated successfully
+        self.is_up_to_date = True
         return True
     
     # Updates list of tracked URLs
@@ -85,6 +90,11 @@ class Match:
                 top = source.filled_data[param]
                 priority = source.priority
         return current
+    
+    def get_source(self, name):
+        for source in self.sources:
+            if source.source_name == name:
+                return source
 
     def choose_value(self, param, path, default_value="N/D"):
         source = self.choose_source(param)
@@ -275,6 +285,49 @@ class Match:
     
     def get_plays_from_period(self, play_list, periods):
         return list(filter(lambda x: x.period in periods and x.type != PlayType.normal, play_list))
+
+    def get_plays_for_round(self):
+        base_source = self.get_source("GloboEsporte")
+
+        res = []
+        goals = base_source.goals
+        cards = base_source.cards
+        feed = base_source.feed
+
+        for play in goals:
+            score = self.format_score(play.score, play.team)
+            own_goal = "contra " if play.own_goal else ""
+            desc = f"Gol {own_goal}de {play.player_name}"
+            res.append(self.generate_round_feed_entry(play, base_source, score, desc, self.get_play_icon(PlayType.goal)))
+        
+        for play in cards:
+            if play.type == "red":
+                score = self.format_score(play.score)
+                team_name = base_source[play.team + "_team"].name
+                desc = f"Cartão Vermelho para {play.player_name} ({team_name})"
+                res.append(self.generate_round_feed_entry(play, base_source, score, desc, self.get_play_icon(PlayType.red_card)))
+
+        for play in feed:
+            if play.type == PlayType.period_start and play.period == MatchPeriod.post_match:
+                score = self.get_final_score()
+                desc = "Fim de Jogo"
+                res.append(self.generate_round_feed_entry(play, base_source, score, desc, self.get_play_icon(play.type)))
+
+        return res
+
+    def generate_round_feed_entry(self, play, base_source, score, desc, icon):
+        return {
+            "time": play.timestamp,
+            "text": round_play_template.format(
+                Horario = "{Hora}:{Minuto}".format(Hora=zero_pad(play.timestamp.hour, 2), Minuto = zero_pad(play.timestamp.minute, 2)),
+                Icone = icon,
+                Mandante = base_source.home_team.name,
+                Visitante = base_source.away_team.name,
+                Placar = score,
+                Lance = desc,
+                Momento = self.get_moment(play.period, play.time)
+            )
+        }
 
     # Formats play's output text according to its type
     def translate_play(self, play):
@@ -481,7 +534,7 @@ class Match:
     # Format differs between teams to accomodate the 1 (5) x (4) 1 format
     # Output Format for Home team: 1 (5)
     # Output Format for Away team: (5) 1
-    def get_team_score(self, team):
+    def get_team_score(self, team, highlighted=False):
         try:
             # TODO: Check all sources for possible divergence
             source = self.choose_source("period")
@@ -495,7 +548,10 @@ class Match:
             penalties = state.home_penalty if team == "home" else state.away_penalty
             
             if not penalties:
-                return str(score)
+                if highlighted:
+                    return f"[{str(score)}]"
+                else:
+                    return str(score)
             else:
                 if team == "home":
                     return "{Placar} ({Penaltis})".format(Placar=score, Penaltis=penalties)
@@ -507,7 +563,7 @@ class Match:
 
     # Get score for both teams, with the 1 (5) x (4) 1
     # x is already included, and penalties only show up if needed
-    def get_final_score(self):
+    def get_final_score(self, scoring_team=None):
         source = self.choose_source("period")
         
         if not source:
@@ -518,7 +574,12 @@ class Match:
         if state.period in [MatchPeriod.upcoming, MatchPeriod.pre_match] or state.home_score == None:
             return "x"
         else:
-            return "{PlacarCasa} x {PlacarFora}".format(PlacarCasa = self.get_team_score("home"), PlacarFora = self.get_team_score("away"))
+            return "{PlacarCasa} x {PlacarFora}".format(PlacarCasa = self.get_team_score("home", scoring_team == "home"), PlacarFora = self.get_team_score("away", scoring_team == "away"))
+
+    def format_score(self, score, scoring_team=None):
+        home_score = score["home"] if scoring_team != "home" else f"[{score['home']}]"
+        away_score = score["away"] if scoring_team != "away" else f"[{score['away']}]"
+        return f"{home_score} x {away_score}"
 
     # Get lists of players who scored goals for the team
     def get_goals_list(self, team):

@@ -36,6 +36,9 @@ def start_up():
         
         # Clear unnecessary MatchData objects
         MatchManager.clear_match_objects()
+
+        # Marks all ongoing matches as needing an update
+        MatchManager.set_matches_to_outdated()
         
         # Clear outdated Schedule objects
         Scheduler.clear_cached()
@@ -86,6 +89,8 @@ def start_up():
         # Updates threads' contents, and create post-match thread if needed
         MatchManager.run_matches()
         MatchManager.finish_untracked_matches()
+
+        RoundManager.update_round_threads()
         
         # Tries to find matches that have been cancelled/postponed
         Scheduler.find_aborted_matches()

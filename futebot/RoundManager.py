@@ -25,7 +25,7 @@ def create_round_threads():
         
         try:
             for (round, sub) in rounds:
-                url = create_base_thread(round, sub)
+                url = create_base_thread(round.title, round.title, sub)
 
                 if url:
                     round.url = url
@@ -56,7 +56,7 @@ def update_round_threads():
             .join(Sub)\
             .filter(now >= Round.date)\
             .filter(Round.url != None)\
-            .filter(Round.finished == False)\
+            .filter(Round.post_match_updates > 0)\
             .all()
         
         # Stop if no active Round Thread
@@ -66,22 +66,22 @@ def update_round_threads():
         try:
             # Update Round Threads
             for (round, sub) in rounds:
-                update_thread(round, sub)
+                update_thread(round, sub, s)
         except Exception as e:
             print_error(e)
         
     if not s.success:
         print_error(s.error)
 
-def create_base_thread(round_data, sub_data):
-    placeholder_text = round_data.title
+def create_base_thread(title, content, sub_data):
+    placeholder_text = title
 
     flair = None if sub_data.match_flair == None else sub_data.match_flair
 
     try:
         submission_url = Redditor.create_thread({
             "sub": sub_data.sub_name,
-            "title": round_data.title,
+            "title": content,
             "text": placeholder_text,
             "flair": flair
         })
@@ -98,10 +98,19 @@ def create_base_thread(round_data, sub_data):
         print_error(e)
         return None
 
-def update_thread(round_data, sub_data):
+def update_thread(round_data, sub_data, s):
     if not round_data.id in ongoing_rounds:
         round = RoundData(sub_data, round_data)
-        ongoing_rounds[round_data.id] = round_data
+        ongoing_rounds[round_data.id] = round
     round = ongoing_rounds[round_data.id]
 
-    round.update_thread()
+    round.update_thread(s, round_data.url, sub_data)
+
+    if round.is_finished(s) and not round.post_round_thread:
+        post_url = create_base_thread(round.post_title, round.post_title, sub_data)
+        if post_url:
+            round_data.post_round_thread = post_url
+            round_data.finished = True
+    
+    if round_data.post_round_thread and round_data.post_match_updates > 0:
+        round.update_post_thread(s, round_data.post_round_thread, sub_data)

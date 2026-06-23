@@ -207,7 +207,10 @@ Gosta do NaTrave? [Seja um apoiador no Catarse!](https://www.catarse.me/natrave)
 """
 round_match_template = "- [{Estado}] {Mandante} {Placar} {Visitante} {Links}"
 round_event_template = "- **{Horario}** {Icone} {Mandante} {Placar} {Visitante} | {EventoDesc} | {Tempo}"
-round_table_header = "Time | Pts | V | E | D | GP | GC | SG"
+round_table_header = "\# | Time | Pts | V | E | D | GP | GC | SG"
+round_table_separator = ":---: | --- | :---: | :---: | :---: | :---: | :---: | :---: | :---:"
+round_table_row = "{Posicao} | {Time} | {Pontos} | {Vitorias} | {Empates} | {Derrotas} | {GolsPro} | {GolsContra} | {SaldoDeGols}"
+round_play_template = "* **{Horario}** {Icone}{Mandante} {Placar} {Visitante} | {Lance} | {Momento}"
 
 # ################################ #
 # Icons used in match descriptions

@@ -96,16 +96,18 @@ class Source365Scores(MatchSource):
             self.add_referee(r["name"], "Árbitro Principal")
         
         # Plays Feed
-        feed = self.add_periods_to_feed(feed[::-1])
+
+        # feed = self.add_periods_to_feed(feed[::-1])
+        starting_times = self.get_period_start_times(feed)
+        ongoing_score = { "home": 0, "away": 0 }
+
         for p in feed:
-            self.format_play_entry(game, p)
+            self.format_play_entry(game, p, starting_times, ongoing_score)
         if state_period in [MatchPeriod.post_match, MatchPeriod.finished]:
-            self.add_feed_entry(PlayType.period_start, MatchPeriod.post_match, "0:00", "Fim de Jogo!", "")
+            self.add_feed_entry(PlayType.period_start, MatchPeriod.post_match, "0:00", "Fim de Jogo!", "", datetime.fromisoformat(feed[-1]["LastModified"]))
         
         # Match Events
         events = self.get_path_value(game, "events", [])
-        for ev in events:
-            self.add_match_event(ev)
         
         # TV Broadcast
         broadcast = self.get_path_value(game, "tvNetworks", [])
@@ -297,16 +299,22 @@ class Source365Scores(MatchSource):
     ### Plays Feed Functions ###
     ### #################### ###
     
-    def format_play_entry(self, game, play):
+    def format_play_entry(self, game, play, starting_times, ongoing_score):
         type = self.convert_play_type(play["TypeName"], play["Period"])
-        period = play["PeriodType"]
+        period = self.convert_period_value(play["Period"])
         time = self.get_play_time(play)
 
         title = self.get_play_title(play, type)
         body = self.get_play_body(play, type)
+
+        timestamp = starting_times[period] + self.moment_to_timedelta(time)
         
         # Actually add entry to feed
-        self.add_feed_entry(type, period, time, title, body)
+        self.add_feed_entry(type, period, time, title, body, timestamp, None)
+
+        # Check if it's a goal, card or substitution
+        if type in [PlayType.goal, PlayType.own_goal, PlayType.yellow_card, PlayType.red_card, PlayType.substitution]:
+            self.add_as_match_event(play, type, period, time, timestamp, ongoing_score)
     
     def get_play_time(self, play):
         if not "Timeline" in play:
@@ -391,7 +399,7 @@ class Source365Scores(MatchSource):
         return self.beautify_title(comm)
     
     # Checks each feed entry in order and adds the appropriate MatchPeriod value
-    # since 365scores doesn't specity intervals actions
+    # since 365scores doesn't specify intervals actions
     def add_periods_to_feed(self, feed):
         l = len(feed)
         current = MatchPeriod.pre_match
@@ -455,11 +463,34 @@ class Source365Scores(MatchSource):
     ### ###################### ###
     ### Match Events Functions ###
     ### ###################### ###
+
+    def add_as_match_event(self, play, type, period, time, timestamp, ongoing_score):
+        players = play["Players"]
+
+        player = players[0]["PID"]
+        team = self.get_player_team(player)
+
+        match type:
+            case PlayType.goal:
+                ongoing_score[team] += 1
+                self.add_event_goal(period, time, team, player, self.player_name(player), False, ongoing_score.copy(), timestamp)
+            case PlayType.own_goal:
+                team = self.invert_team_id(team)
+                ongoing_score[team] += 1
+                self.add_event_goal(period, time, team, player, self.player_name(player), True, ongoing_score.copy(), timestamp)
+            case PlayType.yellow_card:
+                self.add_event_card(period, time, team, player, self.player_name(player), "yellow", ongoing_score.copy(), timestamp)
+            case PlayType.red_card:
+                self.add_event_card(period, time, team, player, self.player_name(player), "red", ongoing_score.copy(), timestamp)
+            case PlayType.substitution:
+                other_player = players[1]["PID"]
+                self.add_event_sub(period, time, team, other_player, player, self.player_name(other_player), self.player_name(player), ongoing_score.copy(), timestamp)
     
-    def add_match_event(self, ev):
+    def add_match_event(self, ev, starting_times):
         type = self.get_path_value(ev, "eventType.name", None)
         subtype = self.get_path_value(ev, "eventType.subTypeName", None)
-        period, time = self.get_event_period_time(ev)
+        period = self.convert_period_value(self.get_path_value(ev, "Period", None))
+        time = self.get_event_period_time(ev, period)
         
         if period == MatchPeriod.penalties:
             return
@@ -470,43 +501,61 @@ class Source365Scores(MatchSource):
         other_player = None if len(other_player) == 0 else other_player[0]
         
         team = "home" if team == self.home_team.id else "away"
+        timestamp = starting_times[period] + self.moment_to_timedelta(time)
+
         if type == "Cartão Amarelo":
-            self.add_event_card(period, time, team, player, self.player_name(player), "yellow")
+            self.add_event_card(period, time, team, player, self.player_name(player), "yellow", timestamp)
         elif type == "Cartão Vermelho":
-            self.add_event_card(period, time, team, player, self.player_name(player), "red")
+            self.add_event_card(period, time, team, player, self.player_name(player), "red", None)
         elif type == "Gol":
             if subtype == "Gol Contra":
                 team = self.invert_team_id(team)
-                self.add_event_goal(period, time, team, player, self.player_name(player), True)
+                self.add_event_goal(period, time, team, player, self.player_name(player), True, timestamp)
             else:
-                self.add_event_goal(period, time, team, player, self.player_name(player), False)
+                self.add_event_goal(period, time, team, player, self.player_name(player), False, timestamp)
         elif type == "Substitution":
-            self.add_event_sub(period, time, team, other_player, player, self.player_name(other_player), self.player_name(player))
+            self.add_event_sub(period, time, team, other_player, player, self.player_name(other_player), self.player_name(player), timestamp)
     
-    def get_event_period_time(self, ev):
-        ev_period = MatchPeriod.pre_match
+    def get_event_period_time(self, ev, period):
+        # Not a running play
+        if not "Timeline" in ev:
+            return 0
         
         # Get minute for running play
-        minute = ev["gameTime"]
-        extra_minute = ev["addedTime"]
+        minute = int(ev["Timeline"])
+        extra_minute = 0
+        if "TimeLineSecondaryText" in ev:
+            extra_minute = int(ev["TimeLineSecondaryText"][1:])
         ev_time = 0
-        if minute > 120:
-            ev_period = MatchPeriod.penalties
-        elif minute > 105:
-            ev_period = MatchPeriod.extra_second_half
-            ev_time = minute - 105 + extra_minute
-        elif minute > 90:
-            ev_period = MatchPeriod.extra_first_half
-            ev_time = minute - 90 + extra_minute
-        elif minute > 45:
-            ev_period = MatchPeriod.second_half
-            ev_time = minute - 45 + extra_minute
-        else:
-            ev_period = MatchPeriod.first_half
-            ev_time = minute + extra_minute
+
+        match period:
+            case MatchPeriod.first_half:
+                ev_time = minute + extra_minute
+            case MatchPeriod.second_half:
+                ev_time = minute - 45 + extra_minute
+            case MatchPeriod.extra_first_half:
+                ev_time = minute - 90 + extra_minute
+            case MatchPeriod.extra_second_half:
+                ev_time = minute - 105 + extra_minute
+            case _:
+                ev_time = 0
         
-        return ev_period, str(int(ev_time)) + ":00"
-    
+        return str(ev_time) + ":00"
+
+    def get_period_start_times(self, plays):
+        res = {}
+        for ev in plays:
+            period = self.convert_period_value(ev["Period"])
+
+            if period == MatchPeriod.penalties:
+                continue
+            
+            if period not in res and "LastModified" in ev:
+                res[period] = datetime.fromisoformat(ev["LastModified"]) + timedelta(hours=-3)
+        
+        return res
+        
+
     def set_statistics(self, home_id, away_id, data):
         stats_map = {
             "1": "yellow_cards",
@@ -577,6 +626,29 @@ class Source365Scores(MatchSource):
         }
         return PlayType.normal if value not in type_dict else type_dict[value]
     
+    def convert_period_value(self, value):
+        match value:
+            case "1":
+                return MatchPeriod.first_half
+            case "2":
+                return MatchPeriod.second_half
+            case "3":
+                return MatchPeriod.extra_first_half
+            case "4":
+                return MatchPeriod.extra_second_half
+            case "5":
+                return MatchPeriod.penalties
+            case "10":
+                return MatchPeriod.interval
+            case "11":
+                return MatchPeriod.preparing_extra_time
+            case "12":
+                return MatchPeriod.extra_interval
+            case "13":
+                return MatchPeriod.preparing_penalties
+            case "16":
+                return MatchPeriod.pre_match
+
     # Gets value from JSON; if value is not found, returns default_value
     def get_path_value(self, obj, path, default_value="-"):
         for i in path.split("."):
@@ -591,6 +663,10 @@ class Source365Scores(MatchSource):
             return self.unknown_players[id]
         else:
             return super().player_name(id)
+    
+    def get_player_team(self, id):
+        player = self.players_ref[id]
+        return player.team
 
     def get_team_fixtures(self, current_game, team_id, max_results=3):
         #given a team 365score id (mineiro is 1209, ream madrid is 131 etc), returns a list of tuples containing the following

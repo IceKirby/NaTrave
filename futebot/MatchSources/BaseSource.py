@@ -5,6 +5,7 @@ from ErrorPrinter import print_error
 from RetryRequest import requests_retry_session
 from Models import MatchPeriod
 from MatchSources.Statistics import Statistics
+from datetime import datetime, timedelta
 
 InfoDetails = namedtuple('InfoDetails', 'date time stadium')
 InfoState = namedtuple('InfoState', 'period time home_score away_score home_penalty away_penalty home_aggregated away_aggregated')
@@ -12,10 +13,10 @@ InfoTour = namedtuple('InfoTour', 'name stage round')
 InfoTeam = namedtuple('InfoTeam', 'name id players coach formation starting substitutes')
 InfoPlayer = namedtuple('InfoPlayer', 'name id shirt_num position team')
 InfoReferee = namedtuple('InfoReferee', 'name role')
-InfoFeedPlay = namedtuple('InfoFeedPlay', 'period time type title body video')
-InfoEventGoal = namedtuple('InfoEventGoal', 'period time team player_id, player_name own_goal')
-InfoEventSub = namedtuple('InfoEventSub', 'period time team player_out player_in player_out_name player_in_name')
-InfoEventCard = namedtuple('InfoEventCard', 'period time team player_id, player_name type')
+InfoFeedPlay = namedtuple('InfoFeedPlay', 'period time type title body timestamp video')
+InfoEventGoal = namedtuple('InfoEventGoal', 'period time team player_id, player_name own_goal score timestamp')
+InfoEventSub = namedtuple('InfoEventSub', 'period time team player_out player_in player_out_name player_in_name score timestamp')
+InfoEventCard = namedtuple('InfoEventCard', 'period time team player_id, player_name type score timestamp')
 InfoBroadcast = namedtuple('InfoBroadcast', 'name')
 InfoVideo = namedtuple('InfoVideo', 'type period time url title duration source')
 
@@ -195,8 +196,8 @@ class MatchSource:
         self.filled_data["referees"] += 1
     
     ### Add Events ###
-    def add_feed_entry(self, type, period, time, title, body, video=None):
-        play = InfoFeedPlay(period, time, type, title, body, video)
+    def add_feed_entry(self, type, period, time, title, body, timestamp, video=None):
+        play = InfoFeedPlay(period, time, type, title, body, timestamp, video)
         self.feed.append(play)
         if type != PlayType.normal:
             self.filled_data["feed"] = 1
@@ -206,29 +207,29 @@ class MatchSource:
         if video:
             video = self.modify_video_type(entry.video, new_type)
         
-        play = InfoFeedPlay(entry.period, entry.time, new_type, entry.title, entry.body, video)
+        play = InfoFeedPlay(entry.period, entry.time, new_type, entry.title, entry.body, entry.timestamp, video)
         
         index = self.feed.index(entry)
         self.feed[index] = play
         
         
-    def add_event_goal(self, period, time, team, player_id, player_name, is_own_goal):
+    def add_event_goal(self, period, time, team, player_id, player_name, is_own_goal, score, timestamp):
         if is_own_goal:
             team = self.invert_team_id(team)
-        ev = InfoEventGoal(period, time, team, player_id, player_name, is_own_goal)
+        ev = InfoEventGoal(period, time, team, player_id, player_name, is_own_goal, score, timestamp)
         self.goals.append(ev)
         
         self.filled_data["events_goals"] += 1 if player_name != "N/D" else 0.5
         
-    def add_event_sub(self, period, time, team, player_out, player_in, player_out_name, player_in_name):
-        ev = InfoEventSub(period, time, team, player_out, player_in, player_out_name, player_in_name)
+    def add_event_sub(self, period, time, team, player_out, player_in, player_out_name, player_in_name, score, timestamp):
+        ev = InfoEventSub(period, time, team, player_out, player_in, player_out_name, player_in_name, score, timestamp)
         self.subs.append(ev)
         
         self.filled_data["events_subs"] += 0.5 if player_out != "N/D" else 0.25
         self.filled_data["events_subs"] += 0.5 if player_in != "N/D" else 0.25
         
-    def add_event_card(self, period, time, team, player_id, player_name, type):
-        ev = InfoEventCard(period, time, team, player_id, player_name, type)
+    def add_event_card(self, period, time, team, player_id, player_name, type, score, timestamp):
+        ev = InfoEventCard(period, time, team, player_id, player_name, type, score, timestamp)
         self.cards.append(ev)
         
         self.filled_data["events_cards"] += 1 if player_name != "N/D" else 0.5
@@ -256,7 +257,7 @@ class MatchSource:
         count = len(self.feed)
         if count == 0:
             return
-        
+
         # Compare each pair of entries to check if they have different periods
         transitions = {}
         for index in range(1, count):
@@ -267,12 +268,12 @@ class MatchSource:
                 if play.period.is_running():
                     # Add transition saying the period has started
                     title = self.period_desc("Começa ", play.period)
-                    entry = InfoFeedPlay(play.period, "0:00", PlayType.period_start, title, "", None)
+                    entry = InfoFeedPlay(play.period, "0:00", PlayType.period_start, title, "", play.timestamp, None)
                     transitions[index] = entry
                 elif prev.period.is_running():
                     # Add transition saying the period has ended
                     title = self.period_desc("Termina ", prev.period)
-                    entry = InfoFeedPlay(prev.period, prev.time, PlayType.period_end, title, "", None)
+                    entry = InfoFeedPlay(prev.period, prev.time, PlayType.period_end, title, "", prev.timestamp, None)
                     transitions[index] = entry
         
         # Check last feed item manually, since it has no other entry for comparison
@@ -280,13 +281,14 @@ class MatchSource:
         period = self.state.period
         if last.period.is_running() and last.period != period:
             title = self.period_desc("Termina ", last.period)
-            entry = InfoFeedPlay(last.period, last.time, PlayType.period_end, title, "", None)
+            entry = InfoFeedPlay(last.period, last.time, PlayType.period_end, title, "", last.timestamp, None)
             transitions[count] = entry
         
         # Add End of Match entry if it's already finished
         if period.is_finished():
-            entry = InfoFeedPlay(period, "0:00", PlayType.period_start, "Fim de Jogo!", "", None)
+            entry = InfoFeedPlay(period, "0:00", PlayType.period_start, "Fim de Jogo!", "", last.timestamp, None)
             transitions[count+1] = entry
+
         
         # Insert transition entries into the feed array
         if len(transitions) > 0:
@@ -333,3 +335,9 @@ class MatchSource:
             return str
         punctuation = "" if clean_str[-1] in symbols else "."
         return clean_str[0].upper() + clean_str[1:] + punctuation
+
+    
+    def moment_to_timedelta(self, moment):
+        parts = moment.split(":")
+        diff = timedelta(minutes=int(parts[0]), seconds=int(parts[1]))
+        return diff

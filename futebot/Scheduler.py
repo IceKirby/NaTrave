@@ -112,14 +112,6 @@ def request_match_threadless(author, sub_name, lines, pm):
 def request_round_thread(author, sub_name, lines, pm):
     params = BotUtils.split_params_dict(lines)
     
-    # [Rodada]
-    # r/futebol
-    # 28/02/2026 15:00
-    # Campeonato=Campeonato Brasileiro
-    # Título=[Tópico da Rodada] Campeonato Brasileiro - Rodada 38
-    # Pós-Título=[Pós-Rodada] Campeonato Brasileiro - Rodada 38
-    # Tópico Único=Sim
-
     # TODO: Default titles
     date = find_date(lines)
     tour = params["campeonato"]
@@ -475,11 +467,11 @@ def schedule_follows():
     else:
         return True
 
-def fill_tour_matches(tour):
+def fill_tour_matches(tour, sub, with_thread=True):
     today = BotUtils.today().strftime("%Y-%m-%d")
-    res = scheduleGE.find_followed_match(today, None, tour)
+    res = scheduleGE.find_followed_match(today, "", tour)
     if res == None or len(res) == 0:
-        res = schedule365.find_followed_match(today, None, tour)
+        res = schedule365.find_followed_match(today, "", tour)
         if res == None or len(res) == 0:
             return
         
@@ -495,6 +487,9 @@ def fill_tour_matches(tour):
                 
                 # Create/Get Match entry from DB
                 match = SchedulerHelpers.find_or_create_db_match(s, sch, start_time)
+
+                if sub:
+                    thread = SchedulerHelpers.find_or_create_db_thread(s, match, sub, start_time, with_thread)
 
 def find_match_links():
     with db_session() as s:

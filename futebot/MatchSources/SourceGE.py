@@ -5,7 +5,7 @@ import math
 import requests
 from datetime import datetime, timedelta, timezone
 from BotUtils import zero_pad
-from MatchSources.BaseSource import MatchSource, MatchPeriod, PlayType
+from MatchSources.BaseSource import InfoFeedPlay, MatchSource, MatchPeriod, PlayType
 from MatchSources.MatchInfo import MatchInfo
 from ErrorPrinter import print_error
 
@@ -66,10 +66,13 @@ class SourceGE(MatchSource):
             for key,value in rolesDict.items():
                 if key in referees and referees[key] and "nome_popular" in referees[key]:
                     self.add_referee(referees[key]["nome_popular"], value)
-        
+
+        starting_times = self.get_period_start_times(plays)
+        ongoing_score = { "home": 0, "away": 0}
+
         # Plays Feed
         for p in plays:
-            self.format_play_entry(game, p)
+            self.format_play_entry(game, p, starting_times, ongoing_score)
         self.fix_boring_feed()
         self.add_period_transitions()
         
@@ -110,7 +113,7 @@ class SourceGE(MatchSource):
     ### Plays Feed Functions ###
     ### #################### ###
     
-    def format_play_entry(self, game, play):
+    def format_play_entry(self, game, play, starting_times, ongoing_score):
         type = self.convert_play_type(play["tipoLance"])
         period = self.convert_period(play["periodo"])
         time = play["momento"] if play["momento"] else "0:00"
@@ -145,8 +148,10 @@ class SourceGE(MatchSource):
                 
                 video = self.add_video(type, period, time, video_url, caption, duration, "GE")
         
+        timestamp = starting_times[period] + self.moment_to_timedelta(time)
+
         # Actually add entry to feed
-        self.add_feed_entry(type, period, time, title, body, video)
+        self.add_feed_entry(type, period, time, title, body, timestamp, video)
         
         # Add goal, card or sub event
         team = self.get_path_value(play, "time", None)
@@ -156,18 +161,19 @@ class SourceGE(MatchSource):
         if team != None:
             team = "home" if team == self.home_team.id else "away"
             if type == PlayType.goal or type == PlayType.own_goal:
-                self.add_event_goal(period, time, team, player, self.player_name(player), type == PlayType.own_goal)
+                ongoing_score[team] += 1
+                self.add_event_goal(period, time, team, player, self.player_name(player), type == PlayType.own_goal, ongoing_score.copy(), timestamp)
             elif type == PlayType.substitution:
                 if player and player_sub:
-                    self.add_event_sub(period, time, team, player, player_sub, self.player_name(player), self.player_name(player_sub))
+                    self.add_event_sub(period, time, team, player, player_sub, self.player_name(player), self.player_name(player_sub), ongoing_score.copy(), timestamp)
             elif type == PlayType.yellow_card or type == PlayType.red_card:
                 color = "yellow" if type == PlayType.yellow_card else "red"
                 if not player:
                     player = player_sub
                 
                 if player:
-                    self.add_event_card(period, time, team, player, self.player_name(player), color)
-    
+                    self.add_event_card(period, time, team, player, self.player_name(player), color, ongoing_score.copy(), timestamp)
+
     def has_poll(self, play):
         if "blocks" in play and play["blocks"]:
             for b in play["blocks"]:
@@ -199,6 +205,28 @@ class SourceGE(MatchSource):
         time_raw = period_mod + minutes_mod + seconds_mod + time_minutes_mod + time_seconds
         return int(time_raw.replace(" ", ""))
     
+    def get_period_start_times(self, plays):
+        res = {}
+        for play in plays:
+            type = self.convert_play_type(play["tipoLance"])
+            period = self.convert_period(play["periodo"])
+            
+            # Ignore plays that aren't relevant to the feed
+            if type == None:
+                continue
+                
+            # Ignore polls
+            if self.has_poll(play):
+                continue
+
+            if period not in res and "created" in play:
+                res[period] = datetime.fromisoformat(play["created"]) + timedelta(hours=-3)
+                
+        
+        return res
+        
+
+
     def fix_boring_feed(self):
         normal_count = 0
         important_count = 0
