@@ -1,7 +1,9 @@
+from datetime import timedelta
+
 import BotUtils
 import Redditor
 from RoundData import RoundData
-from Models import Round, Sub, SuggestedSort
+from Models import Match, Thread, Round, Sub, SuggestedSort
 from DB import db_session
 from prawcore.exceptions import Forbidden
 from praw.exceptions import RedditAPIException
@@ -9,7 +11,27 @@ from ErrorPrinter import print_error
 
 ongoing_rounds = {}
 
+# Removes old Hub entries from DB
+def clear_old_rounds(cutoff):
+    with db_session() as s:
+        old = s.query(Round).filter(Round.date < cutoff).delete(synchronize_session=False)
+    
+    if not s.success:
+        print_error(s.error)
+    
+    to_pop = []
+    for id,round in ongoing_rounds.items():
+        if round.date < cutoff:
+            to_pop.append(id)
+    
+    for p in to_pop:
+        if p in ongoing_rounds:
+            ongoing_rounds.pop(p)
+
 def create_round_threads():
+    today = BotUtils.today()
+    tomorrow = BotUtils.tomorrow()
+
     with db_session() as s:
         now = BotUtils.now()
 
@@ -37,10 +59,16 @@ def create_round_threads():
                         Redditor.set_thread_sticky(Redditor.url_to_thread_id(url))
 
                     if round.supress_match_threads:
-                        # TODO
-                        # Find Threads that this Round would contain
-                        # Mark them as HUB only
-                        pass
+                        matches = s.query(Match, Thread, Sub)\
+                            .join(Thread)\
+                            .join(Sub)\
+                            .filter(Match.tournament == round.tournament)\
+                            .filter(Match.start_time >= today)\
+                            .filter(Match.start_time < tomorrow)\
+                            .all()
+                        
+                        for m, t, s in matches:
+                            t.hub_only = True
         except Exception as e:
             print_error(e)
         
@@ -111,6 +139,11 @@ def update_thread(round_data, sub_data, s):
         if post_url:
             round_data.post_round_thread = post_url
             round_data.finished = True
+            round_data.end_time = BotUtils.now()
     
     if round_data.post_round_thread and round_data.post_match_updates > 0:
-        round.update_post_thread(s, round_data.post_round_thread, sub_data)
+        now = BotUtils.now()
+        update_threshold = 65 - (5 * round_data.post_match_updates)
+        if now < round_data.end_time + timedelta(minutes=update_threshold):
+            round.update_thread(s, round_data.post_round_thread, sub_data)
+            round_data.post_match_updates -= 1

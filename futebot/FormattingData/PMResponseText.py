@@ -12,6 +12,11 @@ request_match_no_match = "Não foi possível encontrar as partidas na data requi
 request_match_invalid_format = "Não foi possível agendar partidas para {Name} porque o formato da mensagem não é válido. Confira o formato correto em https://www.reddit.com/r/NaTrave/wiki/requisitar"
 request_match_blocked_user = "Você atualmente está impedido de requisitar partidas para {Name} até {Date}. Caso tenha dúvidas, entre em contato com a moderação de {Name}."
 
+# [COMMAND] REQUEST ROUND
+request_round_success = "Você requisitou um Tópico da Rodada para: {Rounds}"
+request_round_error = "Não foi possível agendar a rodada para {Name}, tente novamente em instantes."
+request_round_invalid_format = "Não foi possível agendar rodada para {Name} porque o formato da mensagem não é válido."
+
 # [COMMAND] RESTART MATCH
 restart_match_success = "Você requisitou o reinício das seguintes partidas:  \n  \n{Matches}"
 restart_match_error = "Não foi possível reiniciar as partidas para {Name}, tente novamente em instantes."

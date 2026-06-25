@@ -114,23 +114,24 @@ def request_round_thread(author, sub_name, lines, pm):
     
     # TODO: Default titles
     date = find_date(lines)
-    tour = params["campeonato"]
-    title = params["titulo"]
-    post_title = params["postitulo"]
-    supress_threads = params["topicounico"] or "nao"
-    
     if not date:
-        # TODO
-        # PMResponse.add_response(author, "request_match_error", sub_name, pm)
+        PMResponse.add_response(author, "request_round_invalid_format", sub_name, pm)
         return;
 
+    tour = params["campeonato"]
     if not tour:
-        # TODO
-        # PMResponse.add_response(author, "request_match_error", sub_name, pm)
+        PMResponse.add_response(author, "request_round_invalid_format", sub_name, pm)
         return
     
     tour = NameTranslator.get_standard_tour_name(tour)
+
+    title = params["titulo"] or f"[Tópico da Rodada] {tour}"
+    post_title = params["postitulo"] or f"[Pós-Rodada] {tour}"
+    
+    supress_threads = params["topicounico"] or "nao"
     supress = BotUtils.normalize_name(supress_threads) == "sim"
+
+    requested_data = []
     
     with db_session() as s:
         sub = s.query(Sub).filter(Sub.sub_name.ilike(sub_name)).first()
@@ -143,16 +144,16 @@ def request_round_thread(author, sub_name, lines, pm):
             post_title=post_title,
             supress_match_threads=supress
         )
+        requested_data.append(tour)
 
         s.add(round)
     
-    # TODO: Responses
     if s.success:
-        # PMResponse.add_response(author, "request_match_success", requested_data, pm)
+        PMResponse.add_response(author, "request_round_success", requested_data, pm)
         return True
     else:
         print_error(s.error)
-        # PMResponse.add_response(author, "request_match_error", sub_name, pm)
+        PMResponse.add_response(author, "request_round_error", sub_name, pm)
         return True
 
 def restart_match(author, sub_name, lines, pm):
@@ -419,7 +420,9 @@ def view_requests(author, sub_name, lines, pm):
         return True
 
 def schedule_follows():
-    today = BotUtils.today().strftime("%Y-%m-%d")
+    today = BotUtils.tomorrow()
+    today_str = today.strftime("%Y-%m-%d")
+    tomorrow = BotUtils.tomorrow()
     
     with db_session() as s:
         follows = s.query(Follow, Sub)\
@@ -430,9 +433,9 @@ def schedule_follows():
         try:
             found_matches = []
             for follow,sub in follows:
-                res = scheduleGE.find_followed_match(today, follow.team, follow.tour)
+                res = scheduleGE.find_followed_match(today_str, follow.team, follow.tour)
                 if res == None or len(res) == 0:
-                    res = schedule365.find_followed_match(today, follow.team, follow.tour)
+                    res = schedule365.find_followed_match(today_str, follow.team, follow.tour)
                     if res == None or len(res) == 0:
                         continue
                     
@@ -447,9 +450,18 @@ def schedule_follows():
                         
                         # Create/Get Match entry from DB
                         match = SchedulerHelpers.find_or_create_db_match(s, sch, start_time)
+
+                        round = s.query(Round)\
+                            .filter(Round.sub == sub.id)\
+                            .filter(Round.tournament == match.tournament)\
+                            .filter(Round.date >= today)\
+                            .filter(Round.date < tomorrow)\
+                            .filter(Round.supress_match_threads == True)\
+                            .one()
+                        is_round_only = round != None
                         
                         # Create/Get Thread entry from DB
-                        thread = SchedulerHelpers.find_or_create_db_thread(s, match, sub, start_time, True)
+                        thread = SchedulerHelpers.find_or_create_db_thread(s, match, sub, start_time, not is_round_only)
 
                         if start_time != match.start_time:
                             fix_start_time(s, match, start_time)

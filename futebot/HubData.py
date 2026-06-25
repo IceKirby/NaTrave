@@ -3,8 +3,8 @@ import Redditor
 import BotUtils
 import SubLockManager
 from ErrorPrinter import print_error
-from Models import Sub, Match, Thread, MatchPeriod, Hub, SuggestedSort, PendingUnpin
-from FormattingData.PostTemplate import hub_template, hub_tour_group_template, hub_match_template, hub_match_creation_template, hub_match_postponed_template, hub_match_link_untracked, hub_previous_link
+from Models import Sub, Match, Thread, Round, MatchPeriod, Hub, SuggestedSort, PendingUnpin
+from FormattingData.PostTemplate import hub_template, hub_tour_group_template, hub_match_template, hub_match_creation_template, hub_match_postponed_template, hub_match_link_untracked, hub_previous_link, hub_round_template
 from datetime import timedelta
 from sqlalchemy import or_
 from prawcore.exceptions import Forbidden
@@ -126,8 +126,7 @@ class HubData:
             .all()
         
         tour_groups = self.group_threads_by_tour(threads)
-        tours_text = self.format_tour_groups(tour_groups)
-
+        tours_text = self.format_tour_groups(s, sub, tour_groups)
 
         prev_hub = self.find_previous_hub(s, sub, date)
         prev_hub_line = ""
@@ -204,24 +203,42 @@ class HubData:
         
         return tours
     
-    def format_tour_groups(self, tours):
+    def format_tour_groups(self, s, sub, tours):
         groups = []
         
         order = list(tours.keys())
         order.sort(key=str.lower)
+
+        today = BotUtils.today()
+        tomorrow = BotUtils.tomorrow()
         
         for key in order:
+            round = self.get_round_thread(s, sub, key, today, tomorrow)
+
             data = tours[key]
             text = BotUtils.format_str(hub_tour_group_template,
                 Torneio=key,
-                Partidas=self.list_matches(data)
+                Partidas=self.list_matches(data, round)
             )
             groups.append(text)
         
         return "  \n  \n".join(groups)
     
-    def list_matches(self, data):
+    def get_round_thread(self, s, sub, tournament, today, tomorrow):
+        round = s.query(Round, Sub)\
+            .join(Sub)\
+            .filter(Round.tournament == tournament)\
+            .filter(Round.date >= today)\
+            .filter(Round.date < tomorrow)\
+            .one()
+        
+        return round
+
+    def list_matches(self, data, round):
         out = []
+
+        if round:
+            out.append(self.format_round_line(round))
         
         data.sort(key=lambda match: match[1].start_time)
         
@@ -261,5 +278,17 @@ class HubData:
             Mandante=match.home_team,
             Visitante=match.away_team,
             Placar=score,
+            Links=links
+        )
+    
+    def format_round_line(self, round):
+        if not round.url:
+            links = BotUtils.format_str(hub_match_creation_template, Horario=round.date.strftime('%H:%M'))
+        elif not round.post_round_thread:
+            links = "[Link]({url})".format(url=round.url)
+        else:
+            links = "[Link]({url}) | [Pós-Rodada]({post_url})".format(url=round.url, post_url=round.post_round_thread)
+        
+        return BotUtils.format_str(hub_round_template,
             Links=links
         )

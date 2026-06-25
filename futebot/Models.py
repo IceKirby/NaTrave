@@ -207,6 +207,7 @@ class Round(Base):
     post_round_thread = Column(String(500))
     supress_match_threads = Column(Boolean(), nullable=False, default=False)
     finished = Column(Boolean(), nullable=False, default=False)
+    end_time = Column(DateTime, nullable=True)
     post_match_updates = Column(Integer, nullable=False, default=12)
     parent = relationship('Sub', backref=backref('Round', passive_deletes=True))
 

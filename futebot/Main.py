@@ -61,6 +61,7 @@ def start_up():
             # Removes old Match, Threads, HUBs and Requests from DB
             Scheduler.clear_old_data(db_history_cutoff)
             HubManager.clear_old_hubs(db_history_cutoff)
+            RoundManager.clear_old_rounds(db_history_cutoff)
             
             # Schedule matches according to sub's follows
             # And update date if follows have been scheduled successfully

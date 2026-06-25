@@ -84,6 +84,14 @@ def format_response_data(user, resp):
             Name=to_sub(resp.data["request_match_blocked_user"][0]["sub"]),
             Date=translate_date(resp.data["request_match_blocked_user"][0]["date"]),
         ))
+
+    # [COMMAND] Round Thread
+    if "request_round_success" in resp.data:
+        result.append(PMResponseText.request_round_success.format(Rounds=", ".join(resp.data["request_round_success"])))
+    if "request_round_error" in resp.data:
+        result.append(PMResponseText.request_round_error.format(Name=to_sub(resp.data["request_round_error"])))
+    if "request_round_invalid_format" in resp.data:
+        result.append(PMResponseText.request_round_invalid_format.format(Name=to_sub(resp.data["request_round_invalid_format"])))
     
     # [COMMAND] Abort Match Thread
     if "abort_match_success" in resp.data:

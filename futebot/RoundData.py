@@ -30,7 +30,7 @@ class RoundData:
         
         matches = s.query(Match)\
             .filter(Match.tournament == self.tournament)\
-            .filter(Match.start_time > today)\
+            .filter(Match.start_time >= today)\
             .filter(Match.start_time < tomorrow)\
             .all()
         
@@ -42,12 +42,12 @@ class RoundData:
 
         return found
 
-    def update_thread(self, s, round, sub):
+    def update_thread(self, s, thread_url, sub):
         try:
             text = self.get_thread_content(s, sub, self.date)
             
             # Get thread id according to Reddit API
-            thread_id = Redditor.url_to_thread_id(self.thread_url)
+            thread_id = Redditor.url_to_thread_id(thread_url)
             
             # Actually update the thread's content
             Redditor.update_thread({
