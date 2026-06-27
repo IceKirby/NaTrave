@@ -230,9 +230,12 @@ class HubData:
             .filter(Round.tournament == tournament)\
             .filter(Round.date >= today)\
             .filter(Round.date < tomorrow)\
-            .one()
+            .first()
         
-        return round
+        if not round:
+            return None
+
+        return round[0]
 
     def list_matches(self, data, round):
         out = []

@@ -173,7 +173,7 @@ hub_tour_group_template = """
 """
 
 hub_match_template = "- [{Estado}] {Mandante} {Placar} {Visitante} ({Links})"
-hub_round_template = "**Tópico da Rodada:** {Link}"
+hub_round_template = "- **Tópico da Rodada:** {Links}"
 hub_match_creation_template = "Tópico será criado às {Horario}"
 hub_match_postponed_template = "Partida foi adiada"
 hub_match_link_untracked = "Partida sem tópico próprio"

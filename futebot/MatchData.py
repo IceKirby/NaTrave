@@ -303,7 +303,7 @@ class Match:
         for play in cards:
             if play.type == "red":
                 score = self.format_score(play.score)
-                team_name = base_source[play.team + "_team"].name
+                team_name = base_source.home_team.name if play.team == "home" else base_source.away_team.name
                 desc = f"Cartão Vermelho para {play.player_name} ({team_name})"
                 res.append(self.generate_round_feed_entry(play, base_source, score, desc, self.get_play_icon(PlayType.red_card)))
 

@@ -187,13 +187,20 @@ class RoundData:
         return "  \n".join(mapped_plays)
     
     def is_finished(self, s):
-        matches = self.find_tracked_matches(s)
+        today = self.date
+        tomorrow = self.date + timedelta(days=1)
+        
+        matches = s.query(Match)\
+            .filter(Match.tournament == self.tournament)\
+            .filter(Match.start_time >= today)\
+            .filter(Match.start_time < tomorrow)\
+            .all()
 
         if len(matches) == 0:
             return True
         
         for m in matches:
-            if not m.is_finished:
+            if not m.match_state.is_finished():
                 return False
             
         return True

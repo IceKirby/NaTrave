@@ -60,6 +60,7 @@ def create_round_threads():
 
                     if round.supress_match_threads:
                         matches = s.query(Match, Thread, Sub)\
+                            .select_from(Match)\
                             .join(Thread)\
                             .join(Sub)\
                             .filter(Match.tournament == round.tournament)\
@@ -134,8 +135,8 @@ def update_thread(round_data, sub_data, s):
 
     round.update_thread(s, round_data.url, sub_data)
 
-    if round.is_finished(s) and not round.post_round_thread:
-        post_url = create_base_thread(round.post_title, round.post_title, sub_data)
+    if round.is_finished(s) and not round_data.post_round_thread:
+        post_url = create_base_thread(round_data.post_title, round_data.post_title, sub_data)
         if post_url:
             round_data.post_round_thread = post_url
             round_data.finished = True

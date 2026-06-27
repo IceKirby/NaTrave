@@ -1,12 +1,9 @@
 import os
 import requests
 import re
-import BotUtils
 from bs4 import BeautifulSoup, SoupStrainer
 from TournamentSources.BaseTournament import BaseTournament
 from TournamentSources.TourPageLinksGE import tour_page_links
-
-GE_HASH = os.environ.get('GE_HASH')# or "no ge_hash on os.environ"
 
 cached_tour_links = {}
 
