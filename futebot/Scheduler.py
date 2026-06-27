@@ -112,16 +112,15 @@ def request_match_threadless(author, sub_name, lines, pm):
 def request_round_thread(author, sub_name, lines, pm):
     params = BotUtils.split_params_dict(lines)
     
-    # TODO: Default titles
     date = find_date(lines)
     if not date:
         PMResponse.add_response(author, "request_round_invalid_format", sub_name, pm)
-        return;
+        return True;
 
     tour = params["campeonato"]
     if not tour:
         PMResponse.add_response(author, "request_round_invalid_format", sub_name, pm)
-        return
+        return True;
     
     tour = NameTranslator.get_standard_tour_name(tour)
 
@@ -132,9 +131,23 @@ def request_round_thread(author, sub_name, lines, pm):
     supress = BotUtils.normalize_name(supress_threads) == "sim"
 
     requested_data = []
+
+    date_start = BotUtils.to_day_start(date)
+    date_end = date_start + timedelta(days=1)
     
     with db_session() as s:
         sub = s.query(Sub).filter(Sub.sub_name.ilike(sub_name)).first()
+
+        check_existing = s.query(Round, Sub)\
+            .join(Sub)\
+            .filter(Round.tournament == tour)\
+            .filter(Round.date >= date_start)\
+            .filter(Round.date < date_end)\
+            .first()
+        
+        if check_existing:
+            PMResponse.add_response(author, "request_round_duplicate", sub_name, pm)
+            return True;
 
         round = Round(
             sub=sub.id,

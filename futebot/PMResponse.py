@@ -92,6 +92,8 @@ def format_response_data(user, resp):
         result.append(PMResponseText.request_round_error.format(Name=to_sub(resp.data["request_round_error"])))
     if "request_round_invalid_format" in resp.data:
         result.append(PMResponseText.request_round_invalid_format.format(Name=to_sub(resp.data["request_round_invalid_format"])))
+    if "request_round_duplicate" in resp.data:
+        result.append(PMResponseText.request_round_duplicate.format(Name=to_sub(resp.data["request_round_duplicate"])))
     
     # [COMMAND] Abort Match Thread
     if "abort_match_success" in resp.data:

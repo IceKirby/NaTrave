@@ -17,6 +17,7 @@ InfoFeedPlay = namedtuple('InfoFeedPlay', 'period time type title body timestamp
 InfoEventGoal = namedtuple('InfoEventGoal', 'period time team player_id, player_name own_goal score timestamp')
 InfoEventSub = namedtuple('InfoEventSub', 'period time team player_out player_in player_out_name player_in_name score timestamp')
 InfoEventCard = namedtuple('InfoEventCard', 'period time team player_id, player_name type score timestamp')
+InfoSummaryEvent = namedtuple('InfoSummaryEvent', 'period time type team player_id, player_name score desc timestamp')
 InfoBroadcast = namedtuple('InfoBroadcast', 'name')
 InfoVideo = namedtuple('InfoVideo', 'type period time url title duration source')
 
@@ -100,6 +101,7 @@ class MatchSource:
             "events_cards": 0,
             "events_subs": 0,
             "feed": 0,
+            "summary": 0,
             
             "broadcast": 0,
             "video": 0,
@@ -120,6 +122,7 @@ class MatchSource:
         
         # Plays Feed
         self.feed = []
+        self.summary = []
         
         # Events  
         self.goals = []
@@ -212,13 +215,17 @@ class MatchSource:
         index = self.feed.index(entry)
         self.feed[index] = play
         
-        
     def add_event_goal(self, period, time, team, player_id, player_name, is_own_goal, score, timestamp):
         if is_own_goal:
             team = self.invert_team_id(team)
         ev = InfoEventGoal(period, time, team, player_id, player_name, is_own_goal, score, timestamp)
         self.goals.append(ev)
+
+        own_goal = "contra " if is_own_goal else ""
+        desc = f"Gol {own_goal}de {player_name}"
         
+        self.add_summary_event(period, time, PlayType.goal, team, player_id, player_name, score, desc, timestamp)
+
         self.filled_data["events_goals"] += 1 if player_name != "N/D" else 0.5
         
     def add_event_sub(self, period, time, team, player_out, player_in, player_out_name, player_in_name, score, timestamp):
@@ -231,9 +238,21 @@ class MatchSource:
     def add_event_card(self, period, time, team, player_id, player_name, type, score, timestamp):
         ev = InfoEventCard(period, time, team, player_id, player_name, type, score, timestamp)
         self.cards.append(ev)
+
+        if type == "red":
+            team_name = self.home_team.name if team == "home" else self.away_team.name
+            desc = f"Cartão Vermelho para {player_name} ({team_name})"
+
+            self.add_summary_event(period, time, PlayType.red_card, team, player_id, player_name, score, desc, timestamp)
         
         self.filled_data["events_cards"] += 1 if player_name != "N/D" else 0.5
     
+    def add_summary_event(self, period, time, type, team, player_id, player_name, score, desc, timestamp):
+        ev = InfoSummaryEvent(period, time, type, team, player_id, player_name, score, desc, timestamp)
+
+        self.summary.append(ev)
+        self.filled_data["summary"] += 1
+
     def add_broadcast(self, name):
         b = InfoBroadcast(name)
         self.broadcast.append(b)
@@ -288,6 +307,9 @@ class MatchSource:
         if period.is_finished():
             entry = InfoFeedPlay(period, "0:00", PlayType.period_start, "Fim de Jogo!", "", last.timestamp, None)
             transitions[count+1] = entry
+
+            score = { "home": self.state.home_score, "away": self.state.away_score }
+            self.add_summary_event(period, last.time, PlayType.period_end, None, None, None, score, "Fim de Jogo!", last.timestamp)
 
         
         # Insert transition entries into the feed array

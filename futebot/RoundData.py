@@ -25,7 +25,7 @@ class RoundData:
         Scheduler.fill_tour_matches(self.tournament, sub, not supress_match_threads)
 
     def find_tracked_matches(self, s):
-        today = self.date
+        today = BotUtils.to_day_start(self.date)
         tomorrow = self.date + timedelta(days=1)
         
         matches = s.query(Match)\
@@ -42,12 +42,13 @@ class RoundData:
 
         return found
 
-    def update_thread(self, s, thread_url, sub):
+    def update_thread(self, s, round, sub):
         try:
-            text = self.get_thread_content(s, sub, self.date)
+            link = "" if not round.post_round_thread else f"**Tópico Pós-Rodada:** {round.post_round_thread}"
+            text = self.get_thread_content(s, sub, self.date, False, link)
             
             # Get thread id according to Reddit API
-            thread_id = Redditor.url_to_thread_id(thread_url)
+            thread_id = Redditor.url_to_thread_id(round.url)
             
             # Actually update the thread's content
             Redditor.update_thread({
@@ -57,17 +58,33 @@ class RoundData:
         except Exception as e:
             print_error(e)
 
-    def get_thread_content(self, s, sub, date):
+    def update_post_thread(self, s, round, sub):
+        try:
+            link = f"**Tópico da Rodada:** {round.url}"
+            text = self.get_thread_content(s, sub, self.date, True, link)
+            
+            # Get thread id according to Reddit API
+            thread_id = Redditor.url_to_thread_id(round.post_round_thread)
+            
+            # Actually update the thread's content
+            Redditor.update_thread({
+                "id": thread_id,
+                "text": text
+            })
+        except Exception as e:
+            print_error(e)
+
+    def get_thread_content(self, s, sub, date, force_single_column=False, link=""):
         matches = self.find_tracked_matches(s)
         
-        today = self.date
+        today = BotUtils.to_day_start(self.date)
         tomorrow = self.date + timedelta(days=1)
 
         threads = s.query(Thread, Match)\
             .join(Match)\
             .filter(Thread.sub == sub.id)\
             .filter(Match.tournament == self.tournament)\
-            .filter(Match.start_time > today)\
+            .filter(Match.start_time >= today)\
             .filter(Match.start_time < tomorrow)\
             .all()
         
@@ -75,11 +92,14 @@ class RoundData:
 
         tour_round_name = self.tournament + ("" if not tour_data.current_round else " - Rodada " + str(tour_data.current_round))
 
+        cols = 1 if force_single_column else 2
+
         text = BotUtils.format_str(round_template,
+            Link=link,
             TorneioRodada=tour_round_name,
             Data=BotUtils.translate_date(date, False),
             Partidas=self.get_formatted_match_list(threads),
-            Tabela=self.format_standings_table(tour_data.standings),
+            Tabela=self.format_standings_table(tour_data.standings, cols),
             Lances=self.get_matches_feed(matches)
         )
         
@@ -91,7 +111,7 @@ class RoundData:
         for t, m in threads:
             res.append(self.format_match_line(m, t))
 
-        return "\n\n".join(res)
+        return "\n".join(res)
 
     def format_match_line(self, match, thread):
         match_data = MatchManager.get_or_create_match_data(match.id)

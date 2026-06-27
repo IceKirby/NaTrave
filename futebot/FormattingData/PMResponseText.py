@@ -16,6 +16,7 @@ request_match_blocked_user = "Você atualmente está impedido de requisitar part
 request_round_success = "Você requisitou um Tópico da Rodada para: {Rounds}"
 request_round_error = "Não foi possível agendar a rodada para {Name}, tente novamente em instantes."
 request_round_invalid_format = "Não foi possível agendar rodada para {Name} porque o formato da mensagem não é válido."
+request_round_duplicate = "Tópico da Rodada para {Name} já foi agendado."
 
 # [COMMAND] RESTART MATCH
 restart_match_success = "Você requisitou o reinício das seguintes partidas:  \n  \n{Matches}"

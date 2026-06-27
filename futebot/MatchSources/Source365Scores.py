@@ -103,8 +103,15 @@ class Source365Scores(MatchSource):
 
         for p in feed:
             self.format_play_entry(game, p, starting_times, ongoing_score)
-        if state_period in [MatchPeriod.post_match, MatchPeriod.finished]:
-            self.add_feed_entry(PlayType.period_start, MatchPeriod.post_match, "0:00", "Fim de Jogo!", "", datetime.fromisoformat(feed[-1]["LastModified"]))
+        
+        if state_period in [MatchPeriod.post_match, MatchPeriod.finished] and len(feed) > 0:
+            last_play = feed[-1]
+            timestamp = last_play["LastModified"]
+            end_time = self.find_end_time(self.feed)
+
+            self.add_feed_entry(PlayType.period_start, MatchPeriod.post_match, end_time, "Fim de Jogo!", "", datetime.fromisoformat(timestamp))
+
+            self.add_summary_event(MatchPeriod.post_match, end_time, PlayType.period_end, None, None, None, ongoing_score, "Fim de Jogo!", timestamp)
         
         # Match Events
         events = self.get_path_value(game, "events", [])
@@ -460,6 +467,14 @@ class Source365Scores(MatchSource):
         
         return feed
     
+    def find_end_time(self, feed):
+        last = ""
+        for p in feed:
+            if p.time != "0:00":
+                return p.time
+        
+        return "0:00"
+
     ### ###################### ###
     ### Match Events Functions ###
     ### ###################### ###

@@ -185,6 +185,8 @@ hub_previous_link = "[Link para a Match HUB do dia {Data}]({Link})"
 round_template = """
 # {TorneioRodada} ({Data}):  
   
+{Link}  
+  
 **Partidas:**  
   
 {Partidas}  

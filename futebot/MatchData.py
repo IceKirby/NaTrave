@@ -288,44 +288,28 @@ class Match:
 
     def get_plays_for_round(self):
         base_source = self.get_source("GloboEsporte")
+        summary = self.choose_value("summary", "summary", [])
 
         res = []
-        goals = base_source.goals
-        cards = base_source.cards
-        feed = base_source.feed
-
-        for play in goals:
-            score = self.format_score(play.score, play.team)
-            own_goal = "contra " if play.own_goal else ""
-            desc = f"Gol {own_goal}de {play.player_name}"
-            res.append(self.generate_round_feed_entry(play, base_source, score, desc, self.get_play_icon(PlayType.goal)))
-        
-        for play in cards:
-            if play.type == "red":
-                score = self.format_score(play.score)
-                team_name = base_source.home_team.name if play.team == "home" else base_source.away_team.name
-                desc = f"Cartão Vermelho para {play.player_name} ({team_name})"
-                res.append(self.generate_round_feed_entry(play, base_source, score, desc, self.get_play_icon(PlayType.red_card)))
-
-        for play in feed:
-            if play.type == PlayType.period_start and play.period == MatchPeriod.post_match:
-                score = self.get_final_score()
-                desc = "Fim de Jogo"
-                res.append(self.generate_round_feed_entry(play, base_source, score, desc, self.get_play_icon(play.type)))
+        for p in summary:
+            res.append(self.generate_round_feed_entry(p, base_source))
 
         return res
 
-    def generate_round_feed_entry(self, play, base_source, score, desc, icon):
+    def generate_round_feed_entry(self, play, base_source):
+        scorer_team = None if play.type != PlayType.goal else play.team
+        score = self.format_score(play.score, scorer_team)
+        
         return {
             "time": play.timestamp,
             "text": round_play_template.format(
                 Horario = "{Hora}:{Minuto}".format(Hora=zero_pad(play.timestamp.hour, 2), Minuto = zero_pad(play.timestamp.minute, 2)),
-                Icone = icon,
+                Icone = self.get_play_icon(play.type),
                 Mandante = base_source.home_team.name,
                 Visitante = base_source.away_team.name,
                 Placar = score,
-                Lance = desc,
-                Momento = self.get_moment(play.period, play.time)
+                Lance = play.desc,
+                Momento = self.get_moment(play.period, play.time, True)
             )
         }
 

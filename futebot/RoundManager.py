@@ -133,7 +133,7 @@ def update_thread(round_data, sub_data, s):
         ongoing_rounds[round_data.id] = round
     round = ongoing_rounds[round_data.id]
 
-    round.update_thread(s, round_data.url, sub_data)
+    round.update_thread(s, round_data, sub_data)
 
     if round.is_finished(s) and not round_data.post_round_thread:
         post_url = create_base_thread(round_data.post_title, round_data.post_title, sub_data)
@@ -141,10 +141,12 @@ def update_thread(round_data, sub_data, s):
             round_data.post_round_thread = post_url
             round_data.finished = True
             round_data.end_time = BotUtils.now()
+            round.update_thread(s, round_data, sub_data)
+            
     
     if round_data.post_round_thread and round_data.post_match_updates > 0:
         now = BotUtils.now()
         update_threshold = 65 - (5 * round_data.post_match_updates)
-        if now < round_data.end_time + timedelta(minutes=update_threshold):
-            round.update_thread(s, round_data.post_round_thread, sub_data)
+        if now >= round_data.end_time + timedelta(minutes=update_threshold):
+            round.update_post_thread(s, round_data, sub_data)
             round_data.post_match_updates -= 1
