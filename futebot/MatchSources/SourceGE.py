@@ -221,11 +221,8 @@ class SourceGE(MatchSource):
 
             if period not in res and "created" in play:
                 res[period] = datetime.fromisoformat(play["created"]) + timedelta(hours=-3)
-                
         
         return res
-        
-
 
     def fix_boring_feed(self):
         normal_count = 0

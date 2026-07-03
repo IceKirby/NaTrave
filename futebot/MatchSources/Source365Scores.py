@@ -111,7 +111,7 @@ class Source365Scores(MatchSource):
 
             self.add_feed_entry(PlayType.period_start, MatchPeriod.post_match, end_time, "Fim de Jogo!", "", datetime.fromisoformat(timestamp))
 
-            self.add_summary_event(MatchPeriod.post_match, end_time, PlayType.period_end, None, None, None, ongoing_score, "Fim de Jogo!", timestamp)
+            self.add_summary_event(MatchPeriod.post_match, end_time, PlayType.period_end, None, None, None, ongoing_score, "Fim de Jogo!", datetime.fromisoformat(timestamp))
         
         # Match Events
         events = self.get_path_value(game, "events", [])

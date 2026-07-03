@@ -186,6 +186,7 @@ round_template = """
 # {TorneioRodada} ({Data}):  
   
 {Link}  
+{Stream}  
   
 **Partidas:**  
   

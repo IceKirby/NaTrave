@@ -45,10 +45,12 @@ class RoundData:
     def update_thread(self, s, round, sub):
         try:
             link = "" if not round.post_round_thread else f"**Tópico Pós-Rodada:** {round.post_round_thread}"
-            text = self.get_thread_content(s, sub, self.date, False, link)
             
             # Get thread id according to Reddit API
             thread_id = Redditor.url_to_thread_id(round.url)
+
+            stream_link = "[Link para Live Match Thread](https://reddit-stream.com/comments/" + thread_id + ")",
+            text = self.get_thread_content(s, sub, self.date, False, link, stream_link)
             
             # Actually update the thread's content
             Redditor.update_thread({
@@ -74,7 +76,7 @@ class RoundData:
         except Exception as e:
             print_error(e)
 
-    def get_thread_content(self, s, sub, date, force_single_column=False, link=""):
+    def get_thread_content(self, s, sub, date, force_single_column=False, link="", stream_link=""):
         matches = self.find_tracked_matches(s)
         
         today = BotUtils.to_day_start(self.date)
@@ -86,6 +88,7 @@ class RoundData:
             .filter(Match.tournament == self.tournament)\
             .filter(Match.start_time >= today)\
             .filter(Match.start_time < tomorrow)\
+            .order_by(Match.start_time, Match.home_team)\
             .all()
         
         tour_data = TourManager.get_tour_data(self.tournament)
@@ -96,6 +99,7 @@ class RoundData:
 
         text = BotUtils.format_str(round_template,
             Link=link,
+            Stream=stream_link,
             TorneioRodada=tour_round_name,
             Data=BotUtils.translate_date(date, False),
             Partidas=self.get_formatted_match_list(threads),

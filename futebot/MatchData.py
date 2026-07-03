@@ -287,7 +287,7 @@ class Match:
         return list(filter(lambda x: x.period in periods and x.type != PlayType.normal, play_list))
 
     def get_plays_for_round(self):
-        base_source = self.get_source("GloboEsporte")
+        base_source = self.choose_source("home_starting")
         summary = self.choose_value("summary", "summary", [])
 
         res = []

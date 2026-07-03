@@ -68,7 +68,7 @@ def create_round_threads():
                             .filter(Match.start_time < tomorrow)\
                             .all()
                         
-                        for m, t, s in matches:
+                        for m, t, su in matches:
                             t.hub_only = True
         except Exception as e:
             print_error(e)
