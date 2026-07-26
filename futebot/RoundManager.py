@@ -141,7 +141,7 @@ def update_thread(round_data, sub_data, s):
             round_data.post_round_thread = post_url
             round_data.finished = True
             round_data.end_time = BotUtils.now()
-            round.update_thread(s, round_data, sub_data)
+            round.update_post_thread(s, round_data, sub_data)
             
     
     if round_data.post_round_thread and round_data.post_match_updates > 0:

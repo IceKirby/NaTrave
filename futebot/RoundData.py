@@ -10,6 +10,8 @@ from datetime import timedelta
 from sqlalchemy import or_
 from prawcore.exceptions import Forbidden
 
+from TournamentSources.BaseTournament import TourStageType
+
 class RoundData:
     def __init__(self, sub, round):
         self.tournament = round.tournament
@@ -49,7 +51,7 @@ class RoundData:
             # Get thread id according to Reddit API
             thread_id = Redditor.url_to_thread_id(round.url)
 
-            stream_link = "[Link para Live Match Thread](https://reddit-stream.com/comments/" + thread_id + ")",
+            stream_link = f"[Link para Live Match Thread](https://reddit-stream.com/comments/{thread_id})"
             text = self.get_thread_content(s, sub, self.date, False, link, stream_link)
             
             # Actually update the thread's content
@@ -97,13 +99,20 @@ class RoundData:
 
         cols = 1 if force_single_column else 2
 
+        if tour_data.stage_type == TourStageType.league:
+            standings = self.format_standings_table(tour_data.standings, cols)
+        elif tour_data.stage_type == TourStageType.groups:
+            standings = self.format_groups_table(tour_data.groups)
+        else:
+            standings = "N/D"
+
         text = BotUtils.format_str(round_template,
             Link=link,
             Stream=stream_link,
             TorneioRodada=tour_round_name,
             Data=BotUtils.translate_date(date, False),
             Partidas=self.get_formatted_match_list(threads),
-            Tabela=self.format_standings_table(tour_data.standings, cols),
+            Tabela=standings,
             Lances=self.get_matches_feed(matches)
         )
         
@@ -166,7 +175,7 @@ class RoundData:
             c -= 1
 
         lines.append(col_sep.join(header))
-        lines.append(" | --- | ".join(separator))
+        lines.append(" | :---: | ".join(separator))
 
         # Formats each team position
         rows = []
@@ -190,6 +199,7 @@ class RoundData:
     def format_standings_row(self, row):
         return BotUtils.format_str(round_table_row,
             Posicao=row.position,
+            Variacao=self.get_variation(row.variation),
             Time=row.team,
             Pontos=row.points,
             Vitorias=row.wins,
@@ -200,6 +210,23 @@ class RoundData:
             SaldoDeGols=row.goals_difference
         )
     
+    def get_variation(self, variation):
+        if variation > 0:
+            return "🡱"
+        elif variation < 0:
+            return "🡳"
+        else:
+            return ""
+
+    def format_groups_table(self, groups):
+        res = []
+
+        for g in groups:
+            table = self.format_standings_table(g.standings, 1)
+            res.append(f"{g.name}  \n{table}")
+
+        return "  \n\n".join(res)
+
     def get_matches_feed(self, matches):
         plays = []
         for match in matches:

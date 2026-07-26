@@ -2,7 +2,7 @@ import os
 import requests
 import re
 from bs4 import BeautifulSoup, SoupStrainer
-from TournamentSources.BaseTournament import BaseTournament
+from TournamentSources.BaseTournament import BaseTournament, TourStageType
 from TournamentSources.TourPageLinksGE import tour_page_links
 
 cached_tour_links = {}
@@ -25,22 +25,44 @@ class TournamentGE(BaseTournament):
         self.reset_tour_data()
 
         self.current_round = None if not data["rodada"] else data["rodada"]["atual"]
-        
-        if data["classificacao"]:
-            for r in data["classificacao"]:
-                self.add_standing_row(
-                    r["nome_popular"],
-                    r["ordem"],
-                    r["pontos"],
-                    r["jogos"],
-                    r["vitorias"],
-                    r["empates"],
-                    r["derrotas"],
-                    r["gols_pro"],
-                    r["gols_contra"],
-                    r["saldo_gols"],
-                    r["variacao"]
-                )
+
+        # Find format for this stage
+        phase_type_raw = data["fase"]["tipo"]["tipo_id"]
+        match phase_type_raw:
+            case "1":
+                self.stage_type = TourStageType.league
+            case "2":
+                self.stage_type = TourStageType.knockout
+            case "3":
+                self.stage_type = TourStageType.groups
+
+
+        if self.stage_type == TourStageType.league:
+            if data["classificacao"]:
+                for r in data["classificacao"]:
+                    self.add_row(self.standings, r)
+
+        if self.stage_type == TourStageType.groups:
+            for g in data["grupos"]:
+                group = self.add_group(g["nome_grupo"])
+                for r in g["classificacao"]:
+                    self.add_row(group.standings, r)
+
+    def add_row(self, target, row):
+         self.add_standing_row(
+            target,
+            row["nome_popular"],
+            row["ordem"],
+            row["pontos"],
+            row["jogos"],
+            row["vitorias"],
+            row["empates"],
+            row["derrotas"],
+            row["gols_pro"],
+            row["gols_contra"],
+            row["saldo_gols"],
+            row["variacao"]
+        )
 
     def find_page_url(self, tour_name):
         for e in tour_page_links:

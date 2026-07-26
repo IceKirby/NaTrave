@@ -25,6 +25,7 @@ class Tournament365Scores(BaseTournament):
         if rows:
             for r in rows:
                 self.add_standing_row(
+                    self.standings,
                     NameTranslator.get_standard_team_name(r["competitor"]["name"]),
                     r["position"],
                     r["points"],
