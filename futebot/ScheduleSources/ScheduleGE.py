@@ -25,9 +25,18 @@ class ScheduleGE(BaseSchedule):
         req_url = 'https://geql.globo.com/graphql?variables={"date":"'+day+'"}&extensions={"persistedQuery":{"version":1,"sha256Hash":"'+GE_HASH+'"}}'
         
         response = requests.get(req_url)
-        return response.json()
+
+        try: 
+            json = response.json()
+        except:
+            return None
+        
+        return json
         
     def format_schedule(self, data):
+        if not data:
+            return None
+        
         try:
             data = data["data"]["championshipsAgenda"]
         except Exception as e:
