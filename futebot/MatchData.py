@@ -388,7 +388,7 @@ class Match:
     def get_team_list(self, team):
         data = self.choose_source("events_subs")
         if not data:
-            data = self.choose_source("base")
+            data = self.choose_source("home_players")
         
         if team == "home":
             starting_ids = data.home_team.starting

@@ -84,12 +84,14 @@ class MatchSource:
             "period": 0,
             "match_time": 0,
             "stats": 0,
-            
+
+            "home_players": 0,
             "home_starting": 0,
             "home_subs": 0,
             "home_coach": 0,
             "home_formation": 0,
-            
+
+            "away_players": 0,
             "away_starting": 0,
             "away_subs": 0,
             "away_coach": 0,
@@ -186,8 +188,10 @@ class MatchSource:
         self.players_ref[id] = player
         if team == "home":
             self.home_team.players.append(player)
+            self.filled_data["home_players"] += 1
         else:
             self.away_team.players.append(player)
+            self.filled_data["away_players"] += 1
     
     def add_referee(self, name, role):
         ref = InfoReferee(name, role)
