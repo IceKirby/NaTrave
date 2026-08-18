@@ -41,6 +41,11 @@ def try_command(pm):
     
     # DEBUG
     print("Comando '{Subject}' (por {User} para r/{Sub}): {CommandData}".format(User=author, Subject=command, Sub=sub, CommandData=lines))
+
+    # User account must be at least 90 days-old and have verified e-mail
+    if not Redditor.is_valid_user(author) and not is_bot_admin(author):
+        PMResponse.add_response(author, "not_valid_user", format_sub_name(sub), pm)
+        return True
     
     # Check if target subreddit exists
     try:

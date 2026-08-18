@@ -390,8 +390,12 @@ class Match:
     # Get list of players for the team, with substitutions between brackets if needed
     def get_team_list(self, team):
         data = self.choose_source("events_subs")
+
         if not data:
             data = self.choose_source("home_players")
+
+        if not data:
+            data = self.choose_source("base")
         
         if team == "home":
             starting_ids = data.home_team.starting

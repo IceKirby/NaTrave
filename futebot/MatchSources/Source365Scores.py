@@ -128,6 +128,7 @@ class Source365Scores(MatchSource):
         self.add_fixtures(home_fixtures,away_fixtures)
         self.filled_data["fixtures_home"] = len(home_fixtures)
         self.filled_data["fixtures_away"] = len(away_fixtures)
+        
         self.was_updated = True
         
     ### ############### ###
