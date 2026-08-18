@@ -144,6 +144,9 @@ class Match:
     # Formats Match Template's placeholders with actual match data
     def format_match_template(self, template, extra):
         base_source = self.choose_source("base")
+
+        if not base_source:
+            return "N/D"
         
         home_team_starting, home_team_subs = self.get_team_list("home")
         away_team_starting, away_team_subs = self.get_team_list("away")

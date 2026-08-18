@@ -49,6 +49,7 @@ class MatchSource:
         self.url = url
         
         try:
+            self.was_updated = False
             self.process_data(self.url)
         except Exception as e:
             print_error(e)
