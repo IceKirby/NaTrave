@@ -4,13 +4,14 @@ import re
 import SubManager
 import CommandHandler
 import PMResponse
+from datetime import datetime, timedelta
 from DB import db_session
 from ErrorPrinter import print_error
 from praw.models import Comment, Message, Submission
 from praw.exceptions import RedditAPIException
 from prawcore.exceptions import Forbidden
 from prawcore import NotFound
-from BotUtils import format_sub_name
+from BotUtils import format_sub_name, now
 from Models import UnsentPM
 
 reddit = praw.Reddit(
@@ -216,6 +217,28 @@ def is_mod_from_sub(user, sub):
         return False
     except Exception as e:
         raise e
+
+def is_valid_user(user):
+    user = reddit.redditor(user)
+
+    # No user found
+    if not user:
+        return False
+
+    # User must have a verified account
+    if not user.has_verified_email:
+        return False
+
+    # Account must be 3-months old
+    acc_age = now() - datetime.fromtimestamp(user.created_utc)
+    if acc_age < timedelta(days=90):
+        return False
+
+    # Minimum 20 karma
+    if user.comment_karma + user.link_karma < 20:
+        return False
+
+    return True
 
 # Find Post Flair in specific sub
 def find_flair(sub, str):

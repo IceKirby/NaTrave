@@ -86,7 +86,7 @@ class Schedule365Scores(BaseSchedule):
             
             match.source = "365Scores"
             id = m["id"]
-            match.url = f"https://webws.365scores.com/web/game/?gameId={id}&langId=31&userCountryId=21"
+            match.url = f"https://webws.365scores.com/web/game/?appTypeId=5&gameId={id}&langId=31&userCountryId=21"
             match.to_standard_names()
 
             result.append(match)

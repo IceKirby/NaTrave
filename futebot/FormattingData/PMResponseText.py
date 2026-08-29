@@ -1,6 +1,7 @@
 # GENERAL COMMAND MESSAGES
 no_sub_specified = "Seu comando não foi reconhecido porque você não especificou um subreddit."
 no_such_sub = "Não foi possível processar seu comando porque ele contém um ou mais subreddits inválidos: {Name}"
+not_valid_user = "Apenas contas criadas há mais de 90 dias, verificadas por e-mail e com 20 de karma podem usar o bot."
 mod_only_command = "Não foi possível processar seu comando porque você não é um moderador dos seguintes subreddits: {Name}."
 registered_only_command = "Não foi possível processar seu comando porque os seguintes subreddits não estão registrados com o bot: {Name}. Para registrar um subreddit, leia as instruções em https://www.reddit.com/r/NaTrave/wiki/registrar"
 admin_only_command = "Este comando é de uso exclusivo do administrador do bot."

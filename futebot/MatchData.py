@@ -154,6 +154,9 @@ class Match:
     # Formats Match Template's placeholders with actual match data
     def format_match_template(self, template, extra):
         base_source = self.choose_source("base")
+
+        if not base_source:
+            return "N/D"
         
         home_team_starting, home_team_subs = self.get_team_list("home")
         away_team_starting, away_team_subs = self.get_team_list("away")
@@ -429,6 +432,10 @@ class Match:
     # Get list of players for the team, with substitutions between brackets if needed
     def get_team_list(self, team):
         data = self.choose_source("events_subs")
+
+        if not data:
+            data = self.choose_source("home_players")
+
         if not data:
             data = self.choose_source("base")
         

@@ -51,6 +51,8 @@ def format_response_data(user, resp):
         result.append(PMResponseText.no_sub_specified)
     if "no_such_sub" in resp.data:
         result.append(PMResponseText.no_such_sub.format(Name=to_sub(resp.data["no_such_sub"])))
+    if "not_valid_user" in resp.data:
+        result.append(PMResponseText.not_valid_user)
     if "mod_only_command" in resp.data:
         result.append(PMResponseText.mod_only_command.format(Name=to_sub(resp.data["mod_only_command"])))
     if "admin_only_command" in resp.data:
