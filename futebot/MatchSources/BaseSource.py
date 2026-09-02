@@ -224,10 +224,13 @@ class MatchSource:
         if is_own_goal:
             team = self.invert_team_id(team)
         ev = InfoEventGoal(period, time, team, player_id, player_name, is_own_goal, score, timestamp)
-        self.goals.append(ev)
-
+        
         own_goal = "contra " if is_own_goal else ""
-        desc = f"Gol {own_goal}de {player_name}"
+        if player_name == "N/D":
+            team_name = self.home_team.name if team == "home" else self.away_team.name
+            desc = f"Gol de {team_name}"
+        else:
+            desc = f"Gol {own_goal}de {player_name}"
         
         self.add_summary_event(period, time, PlayType.goal, team, player_id, player_name, score, desc, timestamp)
 

@@ -16,11 +16,11 @@ tour_page_links = [
         "url": "https://ge.globo.com/futebol/brasileirao-serie-b/",
     },
     {
-        "name": "Campeonato Brasileiro",
+        "name": "Campeonato Brasileiro Série C",
         "url": "https://ge.globo.com/futebol/brasileirao-serie-c/",
     },
     {
-        "name": "Campeonato Brasileiro",
+        "name": "Campeonato Brasileiro Série D",
         "url": "https://ge.globo.com/futebol/brasileirao-serie-d/",
     },
     {
@@ -28,7 +28,7 @@ tour_page_links = [
         "url": "https://ge.globo.com/futebol/brasileirao-sub-20/",
     },
     {
-        "name": "Campeonato Brasileiro sub-20",
+        "name": "Campeonato Brasileiro Série B sub-20",
         "url": "https://ge.globo.com/futebol/brasileirao-serie-b-sub-20/",
     },
     {
@@ -44,11 +44,11 @@ tour_page_links = [
         "url": "https://ge.globo.com/futebol/futebol-feminino/copa-do-brasil-feminina/",
     },
     {
-        "name": "Campeonato Brasileiro Feminino",
+        "name": "Campeonato Brasileiro Feminino Série A2",
         "url": "https://ge.globo.com/futebol/brasileiro-feminino-serie-a2/",
     },
     {
-        "name": "Campeonato Brasileiro Feminino",
+        "name": "Campeonato Brasileiro Feminino Série A3",
         "url": "https://ge.globo.com/futebol/futebol-feminino/brasileiro-feminino-serie-a3/",
     },
     {

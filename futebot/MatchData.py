@@ -291,6 +291,8 @@ class Match:
 
     def get_plays_for_round(self):
         base_source = self.choose_source("home_starting")
+        if not base_source:
+            base_source = self.choose_source("base")
         summary = self.choose_value("summary", "summary", [])
 
         res = []

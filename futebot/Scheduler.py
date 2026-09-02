@@ -140,6 +140,7 @@ def request_round_thread(author, sub_name, lines, pm):
 
         check_existing = s.query(Round, Sub)\
             .join(Sub)\
+            .filter(Sub.id == sub.id)\
             .filter(Round.tournament == tour)\
             .filter(Round.date >= date_start)\
             .filter(Round.date < date_end)\
