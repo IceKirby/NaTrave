@@ -59,8 +59,8 @@ class Source365Scores(MatchSource):
         tour_id = self.get_path_value(game, "competitionId")
         tour = self.get_tour_data(tour_id)
         self.set_tour(
-            name = self.get_path_value(tour, "name", "N/D"),
-            stage = self.find_tour_stage(tour, self.get_path_value(game, "stageNum")),
+            name = self.get_path_value(tour, "name", "N/D").strip(),
+            stage = self.find_tour_stage(tour, self.get_path_value(game, "stageNum")).strip(),
             round = self.get_path_value(game, "roundNum", "N/D")
         )
         

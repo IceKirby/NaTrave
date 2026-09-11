@@ -130,7 +130,7 @@ def finish_untracked_matches():
         
         # Runs finish_match_data on all matches in finished
         for (thread, match, sub) in pending:
-            schedule_data = Scheduler.find_match(match.start_time, match.home_team, match.away_team)
+            schedule_data = Scheduler.find_match(match.start_time, match.home_team, match.away_team, match.tournament)
             if schedule_data.state == ScheduleState.finished:
                 match.match_state = MatchPeriod.finished
                 match.end_time = now

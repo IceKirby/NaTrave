@@ -489,7 +489,7 @@ def create_match_threads():
         # Use data from Threads, Matches and Subs to create Match Thread
         for (thread, match, sub) in pending:
             try:
-                sch = find_match(match.start_time, match.home_team, match.away_team) 
+                sch = find_match(match.start_time, match.home_team, match.away_team, match.tournament) 
                 # Check if match was cancelled/postponed before the thread was created 
                 if sch and sch.is_aborted: 
                     match.match_state = MatchPeriod.finished 
@@ -536,7 +536,7 @@ def find_aborted_matches():
         
         for m,t in matches:
             try:
-                res = find_match(now, m.home_team, m.away_team)
+                res = find_match(now, m.home_team, m.away_team, m.tournament)
                 if not res or res.is_aborted:
                     m.match_state = MatchPeriod.finished
                     m.postponed = True
