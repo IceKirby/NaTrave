@@ -178,7 +178,7 @@ class Source365Scores(MatchSource):
     
     def get_tour_data(self, id):
         url = f"https://webws.365scores.com/web/competitions/?langId=31&competitions={id}&withSeasons=true"
-        response = requests.get(url)
+        response = requests.get(url, timeout=(8.0, 18.0))
         data = response.json()
         tours = data["competitions"]
         for t in tours:
@@ -600,7 +600,7 @@ class Source365Scores(MatchSource):
         fixtures = []
         if isinstance(team_id, int): #valid teamid
             target_url = f"https://webws.365scores.com/web/games/fixtures/?appTypeId=5&langId=31&userCountryId=21&timezoneName=Etc/GMT+3&competitors={team_id}"
-            response = requests.get(target_url)
+            response = requests.get(target_url, timeout=(8.0, 18.0))
             res_json = response.json()
             if 'games' in res_json:
                 for game in res_json['games']:

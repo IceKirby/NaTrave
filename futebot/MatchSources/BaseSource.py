@@ -57,7 +57,9 @@ class MatchSource:
     
     def fetch_data(self, url):
         try:
-            response = requests_retry_session().get(url)
+            response = requests_retry_session().get(url, timeout=(8.0, 18.0))
+
+            response.raise_for_status()
         except Exception as e:
             print_error(e)
             return
