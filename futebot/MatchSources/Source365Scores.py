@@ -59,8 +59,8 @@ class Source365Scores(MatchSource):
         tour_id = self.get_path_value(game, "competitionId")
         tour = self.get_tour_data(tour_id)
         self.set_tour(
-            name = self.get_path_value(tour, "name", "N/D"),
-            stage = self.find_tour_stage(tour, self.get_path_value(game, "stageNum")),
+            name = self.get_path_value(tour, "name", "N/D").strip(),
+            stage = self.find_tour_stage(tour, self.get_path_value(game, "stageNum")).strip(),
             round = self.get_path_value(game, "roundNum", "N/D")
         )
         
@@ -187,7 +187,7 @@ class Source365Scores(MatchSource):
     
     def get_tour_data(self, id):
         url = f"https://webws.365scores.com/web/competitions/?langId=31&competitions={id}&withSeasons=true"
-        response = requests.get(url)
+        response = requests.get(url, timeout=(8.0, 18.0))
         data = response.json()
         tours = data["competitions"]
         for t in tours:
@@ -691,7 +691,7 @@ class Source365Scores(MatchSource):
         fixtures = []
         if isinstance(team_id, int): #valid teamid
             target_url = f"https://webws.365scores.com/web/games/fixtures/?appTypeId=5&langId=31&userCountryId=21&timezoneName=Etc/GMT+3&competitors={team_id}"
-            response = requests.get(target_url)
+            response = requests.get(target_url, timeout=(8.0, 18.0))
             res_json = response.json()
             if 'games' in res_json:
                 for game in res_json['games']:

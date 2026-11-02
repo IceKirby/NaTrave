@@ -13,7 +13,7 @@ class BaseSchedule:
     def get_day_schedule(self, day):
         pass
 
-    def find_match(self, day, home_team, away_team, is_youth=None, is_women=None):
+    def find_match(self, day, home_team, away_team, tour=None):
         try:
             schedule = self.get_day_schedule(day)
         except Exception as e:
@@ -22,22 +22,31 @@ class BaseSchedule:
         
         if not schedule:
             return None
-        
-        home_team = normalize_name(home_team)
-        away_team = normalize_name(away_team)
-        
-        # Looks for the best match without any sufix
-        normal_match = self.find_best_match(schedule, home_team, away_team)
-        
-        # Looks for the best match using Youth and/or Women team sufix
-        sufix_match = None
-        if is_youth or is_women:
-            sufix_match = self.find_best_match(schedule, home_team, away_team, is_youth, is_women)
-        
-        if not sufix_match:
-            return normal_match[0]
-        else:
-            return normal_match[0] if normal_match[1] > sufix_match[1] else sufix_match[0]
+
+        # Find all matches with matching team names
+        matches = self.find_all_matches(schedule, home_team, away_team)
+        if len(matches) == 0:
+            return None
+
+        # If tour is specified, only return it if it matches that tour
+        if tour != None:
+            for m in matches:
+                if m.tour == tour:
+                    return m
+            return None
+
+        # If no tour is specified, priority should be Men > Women > Men Youth > Women Youth
+        matches.sort(reverse=True, key=self.match_category_priority)
+        return matches[0]
+
+    def find_all_matches(self, schedule, home_team, away_team):
+        # Check each Schedule object for a match with the input names
+        res = []
+        for s in schedule:
+            if s.home_team == home_team and s.away_team == away_team:
+                res.append(s)
+
+        return res
     
     def find_best_match(self, schedule, home_team, away_team, is_youth=None, is_women=None):
         # If no exact match, check for a close one
@@ -108,6 +117,15 @@ class BaseSchedule:
     
     def format_schedule(self, data):
         pass
+
+    def match_category_priority(self, m):
+        val = 5
+        if m.is_women_match:
+            val -= 1
+        if m.is_youth_match:
+            val -= 2
+
+        return val
 
     def compare_with_alts(self, name, alts):
         highest = 0

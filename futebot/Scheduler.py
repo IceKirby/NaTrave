@@ -545,14 +545,14 @@ def find_match_links():
     if not s.success:
         print_error(s.error)
 
-def find_match(day, home_team, away_team):
+def find_match(day, home_team, away_team, tour):
     today = day.strftime("%Y-%m-%d")
     
-    res = scheduleGE.find_match(today, home_team, away_team)
+    res = scheduleGE.find_match(today, home_team, away_team, tour)
     if res:
         return res
     
-    res = schedule365.find_match(today, home_team, away_team)
+    res = schedule365.find_match(today, home_team, away_team, tour)
     if res:
         return res
     
@@ -561,7 +561,7 @@ def find_match(day, home_team, away_team):
 def find_requested_matches(day, matches):
     found_matches = []
     for m in matches:
-        res = find_match(day, m["home"], m["away"])
+        res = find_match(day, m["home"], m["away"], m["tour"])
         if res and res.state != ScheduleState.finished:
             found_matches.append(res)
     return found_matches
@@ -585,7 +585,7 @@ def create_match_threads():
         # Use data from Threads, Matches and Subs to create Match Thread
         for (thread, match, sub) in pending:
             try:
-                sch = find_match(match.start_time, match.home_team, match.away_team) 
+                sch = find_match(match.start_time, match.home_team, match.away_team, match.tournament) 
                 # Check if match was cancelled/postponed before the thread was created 
                 if sch and sch.is_aborted: 
                     match.match_state = MatchPeriod.finished 
@@ -632,7 +632,7 @@ def find_aborted_matches():
         
         for m,t in matches:
             try:
-                res = find_match(now, m.home_team, m.away_team)
+                res = find_match(now, m.home_team, m.away_team, m.tournament)
                 if not res or res.is_aborted:
                     m.match_state = MatchPeriod.finished
                     m.postponed = True
@@ -757,23 +757,16 @@ def create_base_thread(thread_data, match_data, sub_data):
 # Finds and assigns URL for match
 def fill_match_links(match, day):
     # Looks for match at GE, and assigns its URL if found
-    is_youth_match = None
-    is_women_match = None
     if match.ge_url == None:
-        res = scheduleGE.find_match(day, match.home_team, match.away_team)
-        if res:
-            if res.url:
-                match.ge_url = res.url
-            is_youth_match = res.is_youth_match
-            is_women_match = res.is_women_match
+        res = scheduleGE.find_match(day, match.home_team, match.away_team, match.tournament)
+        if res and res.url:
+            match.ge_url = res.url
     
     # Looks for match at 365Scores, and assigns its URL if found
     if match.s365_url == None:
-        # res = schedule365.find_match(day, match.home_team, match.away_team)
-        res = schedule365.find_match(day, match.home_team, match.away_team, is_youth_match, is_women_match)
-        if res:
-            if res.url:
-                match.s365_url = res.url
+        res = schedule365.find_match(day, match.home_team, match.away_team, match.tournament)
+        if res and res.url:
+            match.s365_url = res.url
 
 def fix_start_time(s, match, new_time):
     match.start_time = new_time
@@ -853,7 +846,7 @@ def get_match_list_response(matches, threads, sub_name):
 def parse_match_request(lines, standard_names=True):
     matches, date = [], None
     date_re = r"[0-9]{1,2}\/[0-9]{1,2}(\/[0-9]{2,4})?"
-    match_re = r"(.+)\s(vs|x)\s(.+)"
+    match_re = r"(\[(.+)\])?\s?(.+)\s(vs|x)\s(.+)"
 
     for x in lines:
         line = x.strip()
@@ -862,9 +855,17 @@ def parse_match_request(lines, standard_names=True):
             continue
         has_match = re.search(match_re, line, re.IGNORECASE)
         if has_match:
+            tour = None
+            
+            if has_match.group(1):
+                tour = has_match.group(2)
+                if standard_names:
+                    tour = NameTranslator.get_standard_tour_name(tour)
+
             matches.append({
-                "home": has_match.group(1) if not standard_names else NameTranslator.get_standard_team_name(has_match.group(1)),
-                "away": has_match.group(3) if not standard_names else NameTranslator.get_standard_team_name(has_match.group(3))
+                "home": has_match.group(3) if not standard_names else NameTranslator.get_standard_team_name(has_match.group(3)),
+                "away": has_match.group(5) if not standard_names else NameTranslator.get_standard_team_name(has_match.group(5)),
+                "tour": tour
             })
 
     if date == None:
