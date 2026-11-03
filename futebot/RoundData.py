@@ -212,9 +212,9 @@ class RoundData:
     
     def get_variation(self, variation):
         if variation > 0:
-            return "🡱"
+            return "↑"
         elif variation < 0:
-            return "🡳"
+            return "↓"
         else:
             return ""
 

@@ -434,7 +434,7 @@ def view_requests(author, sub_name, lines, pm):
         return True
 
 def schedule_follows():
-    today = BotUtils.tomorrow()
+    today = BotUtils.today()
     today_str = today.strftime("%Y-%m-%d")
     tomorrow = BotUtils.tomorrow()
     
@@ -471,7 +471,7 @@ def schedule_follows():
                             .filter(Round.date >= today)\
                             .filter(Round.date < tomorrow)\
                             .filter(Round.supress_match_threads == True)\
-                            .one()
+                            .first()
                         is_round_only = round != None
                         
                         # Create/Get Thread entry from DB

@@ -32,7 +32,7 @@ class Schedule365Scores(BaseSchedule):
             'userCountryId': 21
         }
         # print(base_url + urlencode(params))
-        response = requests.get(base_url + urlencode(params))
+        response = requests.get(base_url + urlencode(params), timeout=(8.0, 18.0))
         sch = response.json()
         return sch
 

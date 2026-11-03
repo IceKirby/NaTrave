@@ -24,7 +24,7 @@ class ScheduleGE(BaseSchedule):
     def get_raw_schedule(self, day):
         req_url = 'https://geql.globo.com/graphql?variables={"date":"'+day+'"}&extensions={"persistedQuery":{"version":1,"sha256Hash":"'+GE_HASH+'"}}'
         
-        response = requests.get(req_url)
+        response = requests.get(req_url, timeout=(8.0, 18.0))
 
         try: 
             json = response.json()

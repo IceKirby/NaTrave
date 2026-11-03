@@ -44,7 +44,7 @@ class Tournament365Scores(BaseTournament):
         if not self.api_url:
             return
         
-        response = requests.get(self.api_url)
+        response = requests.get(self.api_url, timeout=(8.0, 18.0))
         res = response.json()
         return res
     
@@ -73,6 +73,6 @@ class Tournament365Scores(BaseTournament):
             'withSeasons': True,
             'type': 'stats'
         }
-        response = requests.get(base_url + urlencode(params))
+        response = requests.get(base_url + urlencode(params), timeout=(8.0, 18.0))
         sch = response.json()
         return sch
