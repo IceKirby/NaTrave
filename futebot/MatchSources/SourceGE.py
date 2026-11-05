@@ -161,7 +161,10 @@ class SourceGE(MatchSource):
         if team != None:
             team = "home" if team == self.home_team.id else "away"
             if type == PlayType.goal or type == PlayType.own_goal:
-                ongoing_score[team] += 1
+                if type == PlayType.own_goal:
+                    ongoing_score[self.invert_team_id(team)] += 1
+                else:
+                    ongoing_score[team] += 1
                 self.add_event_goal(period, time, team, player, self.player_name(player), type == PlayType.own_goal, ongoing_score.copy(), timestamp)
             elif type == PlayType.substitution:
                 if player and player_sub:

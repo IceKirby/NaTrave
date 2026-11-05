@@ -226,6 +226,7 @@ class MatchSource:
         if is_own_goal:
             team = self.invert_team_id(team)
         ev = InfoEventGoal(period, time, team, player_id, player_name, is_own_goal, score, timestamp)
+        self.goals.append(ev)
         
         own_goal = "contra " if is_own_goal else ""
         if player_name == "N/D":
